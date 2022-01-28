@@ -44,7 +44,7 @@ jobs:
           MAVEN_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SIGNING_PASSWORD }}
         run: |
-          mvn --batch-mode deploy
+          mvn --batch-mode clean deploy
 
       - name: Deploy Release
         if: contains(env.TAG_NAME, 'SNAPSHOT') != true
@@ -53,4 +53,4 @@ jobs:
           MAVEN_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SIGNING_PASSWORD }}
         run: |
-          mvn --batch-mode deploy nexus-staging:close nexus-staging:release
+          mvn --batch-mode clean deploy
