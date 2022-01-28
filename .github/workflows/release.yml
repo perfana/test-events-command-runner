@@ -37,10 +37,20 @@ jobs:
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
           gpg-private-key: ${{ secrets.GPG_SIGNING_KEY }}
 
-      - name: Deploy
+      - name: Deploy Snapshot
+        if: contains(env.TAG_NAME, 'SNAPSHOT') == true
         env:
           MAVEN_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SIGNING_PASSWORD }}
         run: |
           mvn --batch-mode deploy
+
+      - name: Deploy Release
+        if: contains(env.TAG_NAME, 'SNAPSHOT') != true
+        env:
+          MAVEN_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SIGNING_PASSWORD }}
+        run: |
+          mvn --batch-mode deploy nexus-staging:close nexus-staging:release
