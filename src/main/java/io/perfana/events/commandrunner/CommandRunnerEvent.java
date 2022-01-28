@@ -64,6 +64,10 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
 
     @Override
     public void abortTest() {
+        cancelCommand();
+    }
+
+    private void cancelCommand() {
         String command = eventContext.getCommand();
 
         logger.info("About to cancel [" + command + "] for [" + eventContext.getTestContext().getTestRunId() + "]");
@@ -72,6 +76,11 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
             boolean cancel = future.cancel(true);
             logger.info("Cancel [" + cancel + "] for [" + eventContext.getTestContext().getTestRunId() + "]");
         }
+    }
+
+    @Override
+    public void afterTest() {
+        cancelCommand();
     }
 
 }

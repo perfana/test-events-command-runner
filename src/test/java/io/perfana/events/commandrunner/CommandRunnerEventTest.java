@@ -37,13 +37,14 @@ public class CommandRunnerEventTest {
         CommandRunnerEvent event = new CommandRunnerEvent(eventConfig.toContext(), messageBus, EventLoggerStdOut.INSTANCE);
         event.beforeTest();
         event.keepAlive();
-        event.afterTest();
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
         event.abortTest();
+        event.afterTest();
+
 
         // not much to assert really... just look at System.out and
         // check it does not blow with an Exception...
