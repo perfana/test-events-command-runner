@@ -248,6 +248,7 @@
                 <groupId>org.sonatype.plugins</groupId>
                 <artifactId>nexus-staging-maven-plugin</artifactId>
                 <version>${nexus-staging-maven-plugin.version}</version>
+                <extensions>true</extensions>
                 <configuration>
                     <serverId>sonatype-nexus</serverId>
                     <nexusUrl>https://oss.sonatype.org/</nexusUrl>
