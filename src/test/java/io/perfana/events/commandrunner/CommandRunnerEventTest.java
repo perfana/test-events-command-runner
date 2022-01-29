@@ -30,7 +30,7 @@ public class CommandRunnerEventTest {
         eventConfig.setName("myEvent1");
         eventConfig.setEnabled(true);
         eventConfig.setTestConfig(TestConfig.builder().build());
-        eventConfig.setCommand("sleep 10");
+        eventConfig.setCommand("sh -c \"echo something >&2; for (( ; ; )) do echo $(date); sleep 0.01; done\"");
 
         EventMessageBus messageBus = new EventMessageBusSimple();
 
@@ -38,7 +38,7 @@ public class CommandRunnerEventTest {
         event.beforeTest();
         event.keepAlive();
         try {
-            Thread.sleep(1000);
+            Thread.sleep(100);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

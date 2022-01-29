@@ -23,14 +23,17 @@ import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.ProcessResult;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> {
 
-    Future<ProcessResult> future;
+    public static final Pattern REGEX_SPLIT_QUOTES = Pattern.compile("\"([^\"]*)\"|(\\S+)");
+
+    private Future<ProcessResult> future;
 
     public CommandRunnerEvent(CommandRunnerEventContext eventContext, EventMessageBus messageBus, EventLogger logger) {
         super(eventContext, messageBus, logger);
@@ -46,10 +49,13 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
 
         logger.info("About to run [" + command + "] for [" + eventContext.getTestContext().getTestRunId() + "]");
 
-        List<String> commandList = Arrays.stream(command.split("\\s+")).collect(Collectors.toList());
+        List<String> commandList = splitCommand(command);
+
         try {
             future = new ProcessExecutor()
                 .command(commandList)
+                .redirectOutput(new PrefixedRedirectOutput(eventContext.getName() + ": ", System.out))
+                .redirectError(new PrefixedRedirectOutput(eventContext.getName() + ": ", System.err))
                 .start().getFuture();
         } catch (IOException e) {
             throw new RuntimeException("Failed to run command: " + command, e);
@@ -60,6 +66,22 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
         this.eventMessageBus.send(builder.pluginName(pluginName).build());
 
         this.eventMessageBus.send(EventMessage.builder().pluginName(pluginName).message("Go!").build());
+    }
+
+    private List<String> splitCommand(String command) {
+        // https://stackoverflow.com/questions/3366281/tokenizing-a-string-but-ignoring-delimiters-within-quotes
+        Matcher m = REGEX_SPLIT_QUOTES.matcher(command);
+        List<String> commandList = new ArrayList<>();
+        while (m.find()) {
+            if (m.group(1) != null) {
+                // Quoted
+                commandList.add(m.group(1));
+            } else {
+                // Plain
+                commandList.add(m.group(2));
+            }
+        }
+        return commandList;
     }
 
     @Override
