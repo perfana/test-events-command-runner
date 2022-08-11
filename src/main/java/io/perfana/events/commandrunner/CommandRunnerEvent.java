@@ -19,12 +19,15 @@ import io.perfana.eventscheduler.api.EventAdapter;
 import io.perfana.eventscheduler.api.EventLogger;
 import io.perfana.eventscheduler.api.message.EventMessage;
 import io.perfana.eventscheduler.api.message.EventMessageBus;
+import io.perfana.eventscheduler.exception.EventSchedulerRuntimeException;
 import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.ProcessResult;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,7 +40,7 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
 
     public CommandRunnerEvent(CommandRunnerEventContext eventContext, EventMessageBus messageBus, EventLogger logger) {
         super(eventContext, messageBus, logger);
-        this.eventMessageBus.addReceiver(m -> logger.info("Received message: " + m));
+        this.eventMessageBus.addReceiver(m -> logger.debug("Received message: " + m));
     }
 
     @Override
@@ -58,14 +61,35 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
                 .redirectError(new PrefixedRedirectOutput(eventContext.getName() + ": ", System.err))
                 .start().getFuture();
         } catch (IOException e) {
-            throw new RuntimeException("Failed to run command: " + command, e);
+            throw new EventSchedulerRuntimeException("Failed to run command: " + command, e);
         }
 
-        EventMessage.EventMessageBuilder builder = EventMessage.builder();
-
-        this.eventMessageBus.send(builder.pluginName(pluginName).build());
+        String tags = "command-runner";
+        Map<String, String> configLines = createTestRunConfigLines();
+        configLines.forEach((name, value) -> sendKeyValueMessage(name, value, pluginName, tags));
 
         this.eventMessageBus.send(EventMessage.builder().pluginName(pluginName).message("Go!").build());
+    }
+
+    private Map<String, String> createTestRunConfigLines() {
+        String prefix = "event." + eventContext.getName() + ".";
+        Map<String, String> lines = new HashMap<>();
+        lines.put(prefix + "command", eventContext.getCommand());
+        return lines;
+    }
+
+    private void sendKeyValueMessage(String key, String value, String pluginName, String tags) {
+
+        EventMessage.EventMessageBuilder messageBuilder = EventMessage.builder();
+
+        messageBuilder.variable("message-type", "test-run-config");
+        messageBuilder.variable("output", "key");
+        messageBuilder.variable("tags", tags);
+
+        messageBuilder.variable("key", key);
+        messageBuilder.message(value);
+
+        this.eventMessageBus.send(messageBuilder.pluginName(pluginName).build());
     }
 
     private List<String> splitCommand(String command) {
