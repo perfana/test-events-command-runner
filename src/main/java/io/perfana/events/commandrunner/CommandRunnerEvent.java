@@ -64,9 +64,12 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
             throw new EventSchedulerRuntimeException("Failed to run command: " + command, e);
         }
 
-        String tags = "command-runner";
-        Map<String, String> configLines = createTestRunConfigLines();
-        configLines.forEach((name, value) -> sendKeyValueMessage(name, value, pluginName, tags));
+        // disable sending of command
+        if (false) {
+            String tags = "command-runner";
+            Map<String, String> configLines = createTestRunConfigLines();
+            configLines.forEach((name, value) -> sendKeyValueMessage(name, value, pluginName, tags));
+        }
 
         this.eventMessageBus.send(EventMessage.builder().pluginName(pluginName).message("Go!").build());
     }
