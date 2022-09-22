@@ -2,9 +2,15 @@
 
 Run a command in the process runner.
 
+Use the `command` tag for the command to run. Used executables should be available
+on the `PATH` of the process that runs this (e.g. the CI server).
+
 When an abort happens, the process is killed.
 
 At the end of the running time, the process is killed.
+
+Use `sendTestRunConfig` to send the command to Perfana test config. Disabled by default.
+Be careful not to send secrets via this option.
 
 ## use
 
@@ -37,6 +43,7 @@ At the end of the running time, the process is killed.
                     <eventConfig implementation="io.perfana.events.commandrunner.CommandRunnerEventConfig">
                         <name>CommandRunnerEventSleep1</name>
                         <command>sleep 10</command>
+                        <sendTestRunConfig>true</sendTestRunConfig>
                     </eventConfig>
                     <eventConfig implementation="io.perfana.events.commandrunner.CommandRunnerEventConfig">
                         <name>CommandRunnerEventSleep2</name>

@@ -18,24 +18,47 @@ package io.perfana.events.commandrunner;
 import io.perfana.eventscheduler.api.config.EventContext;
 import net.jcip.annotations.Immutable;
 
+import java.util.Objects;
+
 @Immutable
 public class CommandRunnerEventContext extends EventContext {
 
     private final String command;
+    private final boolean sendTestRunConfig;
 
-    protected CommandRunnerEventContext(EventContext context, String command) {
+    protected CommandRunnerEventContext(EventContext context, String command, boolean sendTestRunConfig) {
         super(context, CommandRunnerEventFactory.class.getName(), true);
         this.command = command;
+        this.sendTestRunConfig = sendTestRunConfig;
     }
 
     public String getCommand() {
         return command;
     }
 
+    public boolean isSendTestRunConfig() {
+        return sendTestRunConfig;
+    }
+
     @Override
     public String toString() {
         return "CommandRunnerEventContext{" +
-            "command='" + command + '\'' +
-            "} " + super.toString();
+                "command='" + command + '\'' +
+                ", sendTestRunConfig=" + sendTestRunConfig +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        CommandRunnerEventContext that = (CommandRunnerEventContext) o;
+        return sendTestRunConfig == that.sendTestRunConfig && command.equals(that.command);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), command, sendTestRunConfig);
     }
 }

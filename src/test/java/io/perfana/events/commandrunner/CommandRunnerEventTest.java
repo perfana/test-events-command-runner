@@ -21,15 +21,16 @@ import io.perfana.eventscheduler.api.message.EventMessageBus;
 import io.perfana.eventscheduler.log.EventLoggerStdOut;
 import org.junit.jupiter.api.Test;
 
-public class CommandRunnerEventTest {
+class CommandRunnerEventTest {
 
     @Test
-    public void beforeTest() {
+    void beforeTest() {
         CommandRunnerEventConfig eventConfig = new CommandRunnerEventConfig();
         eventConfig.setEventFactory(CommandRunnerEventFactory.class.getSimpleName());
         eventConfig.setName("myEvent1");
         eventConfig.setEnabled(true);
         eventConfig.setTestConfig(TestConfig.builder().build());
+        eventConfig.setSendTestRunConfig(true);
         eventConfig.setCommand("sh -c \"echo something >&2; for (( ; ; )) do echo $(date); sleep 0.01; done\"");
 
         EventMessageBus messageBus = new EventMessageBusSimple();

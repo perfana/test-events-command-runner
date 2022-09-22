@@ -20,6 +20,7 @@ import io.perfana.eventscheduler.api.EventLogger;
 import io.perfana.eventscheduler.api.message.EventMessage;
 import io.perfana.eventscheduler.api.message.EventMessageBus;
 import io.perfana.eventscheduler.exception.EventSchedulerRuntimeException;
+import io.perfana.eventscheduler.util.TestRunConfigUtil;
 import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.ProcessResult;
 
@@ -65,10 +66,10 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
         }
 
         // disable sending of command
-        if (false) {
+        if (eventContext.isSendTestRunConfig()) {
             String tags = "command-runner";
-            Map<String, String> configLines = createTestRunConfigLines();
-            configLines.forEach((name, value) -> sendKeyValueMessage(name, value, pluginName, tags));
+            EventMessage message = TestRunConfigUtil.createTestRunConfigMessageKeys(pluginName, createTestRunConfigLines(), tags);
+            this.eventMessageBus.send(message);
         }
 
         this.eventMessageBus.send(EventMessage.builder().pluginName(pluginName).message("Go!").build());
@@ -79,20 +80,6 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
         Map<String, String> lines = new HashMap<>();
         lines.put(prefix + "command", eventContext.getCommand());
         return lines;
-    }
-
-    private void sendKeyValueMessage(String key, String value, String pluginName, String tags) {
-
-        EventMessage.EventMessageBuilder messageBuilder = EventMessage.builder();
-
-        messageBuilder.variable("message-type", "test-run-config");
-        messageBuilder.variable("output", "key");
-        messageBuilder.variable("tags", tags);
-
-        messageBuilder.variable("key", key);
-        messageBuilder.message(value);
-
-        this.eventMessageBus.send(messageBuilder.pluginName(pluginName).build());
     }
 
     private List<String> splitCommand(String command) {
