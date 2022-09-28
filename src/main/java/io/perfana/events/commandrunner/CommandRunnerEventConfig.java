@@ -23,22 +23,29 @@ import net.jcip.annotations.NotThreadSafe;
 public class CommandRunnerEventConfig extends EventConfig {
 
     private String command;
+
+    private String pollingCommand;
+
+    private String abortCommand;
+
     private boolean sendTestRunConfig = false;
 
     @Override
     public CommandRunnerEventContext toContext() {
-        return new CommandRunnerEventContext(super.toContext(), command, sendTestRunConfig);
+        return new CommandRunnerEventContext(super.toContext(), command, pollingCommand, abortCommand, sendTestRunConfig);
     }
 
     @Override
     public CommandRunnerEventContext toContext(TestContext override) {
-        return new CommandRunnerEventContext(super.toContext(override), command, sendTestRunConfig);
+        return new CommandRunnerEventContext(super.toContext(override), command, pollingCommand, abortCommand, sendTestRunConfig);
     }
 
     @Override
     public String toString() {
         return "CommandRunnerEventConfig{" +
                 "command='" + command + '\'' +
+                ", pollingCommand='" + pollingCommand + '\'' +
+                ", abortCommand='" + abortCommand + '\'' +
                 ", sendTestRunConfig=" + sendTestRunConfig +
                 '}';
     }
@@ -57,5 +64,21 @@ public class CommandRunnerEventConfig extends EventConfig {
 
     public void setSendTestRunConfig(boolean sendTestRunConfig) {
         this.sendTestRunConfig = sendTestRunConfig;
+    }
+
+    public String getPollingCommand() {
+        return pollingCommand;
+    }
+
+    public void setPollingCommand(String pollingCommand) {
+        this.pollingCommand = pollingCommand;
+    }
+
+    public String getAbortCommand() {
+        return abortCommand;
+    }
+
+    public void setAbortCommand(String abortCommand) {
+        this.abortCommand = abortCommand;
     }
 }

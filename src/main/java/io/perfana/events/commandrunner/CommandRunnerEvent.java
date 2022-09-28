@@ -20,6 +20,7 @@ import io.perfana.eventscheduler.api.EventLogger;
 import io.perfana.eventscheduler.api.message.EventMessage;
 import io.perfana.eventscheduler.api.message.EventMessageBus;
 import io.perfana.eventscheduler.exception.EventSchedulerRuntimeException;
+import io.perfana.eventscheduler.exception.handler.StopTestRunException;
 import io.perfana.eventscheduler.util.TestRunConfigUtil;
 import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.ProcessResult;
@@ -29,7 +30,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -101,17 +105,42 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
     @Override
     public void abortTest() {
         cancelCommand();
+        abortCommand();
+    }
+
+    private void abortCommand() {
+        String abortCommand = eventContext.getAbortCommand();
+        if (abortCommand != null) {
+            logger.info("Abort command [" + abortCommand + "] for [" + eventContext.getTestContext().getTestRunId() + "]");
+
+            List<String> commandList = splitCommand(abortCommand);
+
+            try{
+                new ProcessExecutor()
+                        .command(commandList)
+                        .redirectOutput(new PrefixedRedirectOutput(eventContext.getName() + ": ", System.out))
+                        .redirectError(new PrefixedRedirectOutput(eventContext.getName() + ": ", System.err))
+                        .start();
+            } catch (IOException e) {
+                throw new EventSchedulerRuntimeException("Failed to run command: " + abortCommand, e);
+            }
+        }
     }
 
     private void cancelCommand() {
         String command = eventContext.getCommand();
 
-        logger.info("About to cancel [" + command + "] for [" + eventContext.getTestContext().getTestRunId() + "]");
-
         if (future != null) {
-            boolean cancel = future.cancel(true);
-            logger.info("Cancel [" + cancel + "] for [" + eventContext.getTestContext().getTestRunId() + "]");
+            if (!future.isDone()) {
+                logger.info("About to cancel [" + command + "] for [" + eventContext.getTestContext().getTestRunId() + "]");
+                boolean cancel = future.cancel(true);
+                logger.info("Cancel [" + cancel + "] for [" + eventContext.getTestContext().getTestRunId() + "]");
+            }
+            else {
+                logger.info("No cancel needed for finished command for [" + eventContext.getTestContext().getTestRunId() + "]");
+            }
         }
+
     }
 
     @Override
@@ -119,4 +148,52 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
         cancelCommand();
     }
 
+    @Override
+    public void keepAlive() {
+        String pollingCommand = eventContext.getPollingCommand();
+        if (pollingCommand != null) {
+            logger.info("Polling command [" + pollingCommand + "] for [" + eventContext.getTestContext().getTestRunId() + "]");
+
+            List<String> commandList = splitCommand(pollingCommand);
+
+            try{
+                Future<ProcessResult> resultFuture = new ProcessExecutor()
+                        .command(commandList)
+                        .redirectOutput(new PrefixedRedirectOutput(eventContext.getName() + ": ", System.out))
+                        .redirectError(new PrefixedRedirectOutput(eventContext.getName() + ": ", System.err))
+                        .start()
+                        .getFuture();
+
+                ProcessResult processResult;
+                try {
+                    processResult = resultFuture.get(30, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    logger.warn("Polling command got interrupted! " + e.getMessage());
+                    Thread.currentThread().interrupt();
+                    return;
+                } catch (ExecutionException e) {
+                    logger.warn("Polling command cannot be executed! " + e.getMessage());
+                    return;
+                } catch (TimeoutException e) {
+                    logger.warn("Polling command got timeout! " + e.getMessage());
+                    return;
+                }
+
+                int exitValue = processResult.getExitValue();
+                if (exitValue != 0) {
+                    String message = "Received non-0 value for polling command : " + exitValue;
+                    logger.info(message);
+                    if (eventContext.isContinueOnKeepAliveParticipant()) {
+                        throw new StopTestRunException(message);
+                    }
+                }
+                else {
+                    logger.info("Received 0 value for polling command, all is ok");
+                }
+
+            } catch (IOException e) {
+                throw new EventSchedulerRuntimeException("Failed to run command: " + pollingCommand, e);
+            }
+        }
+    }
 }
