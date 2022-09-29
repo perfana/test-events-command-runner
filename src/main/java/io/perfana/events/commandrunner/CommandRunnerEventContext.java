@@ -28,13 +28,16 @@ public class CommandRunnerEventContext extends EventContext {
     private final String pollingCommand;
 
     private final String abortCommand;
+
+    private final String afterTestCommand;
     private final boolean sendTestRunConfig;
 
-    protected CommandRunnerEventContext(EventContext context, String command, String pollingCommand, String abortCommand, boolean sendTestRunConfig) {
+    protected CommandRunnerEventContext(EventContext context, String command, String pollingCommand, String abortCommand, String afterTestCommand, boolean sendTestRunConfig) {
         super(context, CommandRunnerEventFactory.class.getName());
         this.command = command;
         this.pollingCommand = pollingCommand;
         this.abortCommand = abortCommand;
+        this.afterTestCommand = afterTestCommand;
         this.sendTestRunConfig = sendTestRunConfig;
     }
 
@@ -50,6 +53,10 @@ public class CommandRunnerEventContext extends EventContext {
         return abortCommand;
     }
 
+    public String getAfterTestCommand() {
+        return afterTestCommand;
+    }
+
     public boolean isSendTestRunConfig() {
         return sendTestRunConfig;
     }
@@ -60,6 +67,7 @@ public class CommandRunnerEventContext extends EventContext {
                 "command='" + command + '\'' +
                 ", pollingCommand='" + pollingCommand + '\'' +
                 ", abortCommand='" + abortCommand + '\'' +
+                ", afterTestCommand='" + afterTestCommand + '\'' +
                 ", sendTestRunConfig=" + sendTestRunConfig +
                 '}';
     }
@@ -70,11 +78,11 @@ public class CommandRunnerEventContext extends EventContext {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         CommandRunnerEventContext that = (CommandRunnerEventContext) o;
-        return sendTestRunConfig == that.sendTestRunConfig && Objects.equals(command, that.command) && Objects.equals(pollingCommand, that.pollingCommand) && Objects.equals(abortCommand, that.abortCommand);
+        return sendTestRunConfig == that.sendTestRunConfig && Objects.equals(command, that.command) && Objects.equals(pollingCommand, that.pollingCommand) && Objects.equals(abortCommand, that.abortCommand) && Objects.equals(afterTestCommand, that.afterTestCommand);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), command, pollingCommand, abortCommand, sendTestRunConfig);
+        return Objects.hash(super.hashCode(), command, pollingCommand, abortCommand, afterTestCommand, sendTestRunConfig);
     }
 }

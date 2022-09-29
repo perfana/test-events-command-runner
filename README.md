@@ -16,6 +16,9 @@ the test-run is actually stopped.
 Use `abortCommand` for a command that is called on an `abort-test` event. For instance, to stop a 
 remote running load test process.
 
+Use `afterTestCommand` for a command that is called on an `after-test` event. For instance, clean up
+artifacts from a another command.
+
 Note: used executables in the commands should be available
 on the `PATH` of the process that runs this (e.g. the CI server).
 
@@ -51,20 +54,21 @@ Be careful not to send secrets via this option.
                     <eventConfig implementation="io.perfana.events.commandrunner.CommandRunnerEventConfig">
                         <name>K6Runner1</name>
                         <continueOnKeepAliveParticipant>true</continueOnKeepAliveParticipant>
-                        <command>sh -c "touch /tmp/test-run-1.busy; \
-                            echo command to start K6 runner 1"</command>
+                        <command>touch /tmp/test-run-1.busy; \
+                            echo command to start K6 runner 1 for ${testRunId}</command>
                         <pollingCommand>ls /tmp/test-run-1.busy</pollingCommand>
-                        <abortCommand>sh -c "rm /tmp/test-run-1.busy; \
-                            echo abort K6 runner 1"</abortCommand>
+                        <abortCommand>rm /tmp/test-run-1.busy; \
+                            echo abort K6 runner 1</abortCommand>
                     </eventConfig>
                     <eventConfig implementation="io.perfana.events.commandrunner.CommandRunnerEventConfig">
                         <name>K6Runner2</name>
                         <continueOnKeepAliveParticipant>true</continueOnKeepAliveParticipant>
-                        <command>sh -c "touch /tmp/test-run-2.busy; \
-                            echo command to start K6 runner 2"</command>
-                        <pollingCommand>ls /tmp/test-run-2.busy</pollingCommand>
-                        <abortCommand>sh -c "rm /tmp//tmp/test-run-2.busy; \
-                            echo abort K6 runner 2"</abortCommand>
+                        <command>touch /tmp/test-run-2.busy; \
+                            echo command to start K6 runner 2</command>
+                        <pollingCommand>ls /tmp | grep -q test-run-2.busy</pollingCommand>
+                        <abortCommand>rm /tmp/test-run-2.busy; \
+                            echo abort K6 runner 2</abortCommand>
+                        <afterTestCommand>echo end ${testRunId}</afterTestCommand>
                     </eventConfig>
                 </eventConfigs>
             </eventSchedulerConfig>

@@ -31,7 +31,7 @@ class CommandRunnerEventTest {
         eventConfig.setEnabled(true);
         eventConfig.setTestConfig(TestConfig.builder().build());
         eventConfig.setSendTestRunConfig(true);
-        eventConfig.setCommand("sh -c \"echo something >&2; for (( ; ; )) do echo $(date); sleep 0.01; done\"");
+        eventConfig.setCommand("echo something >&2; for (( ; ; )) do echo $(date); sleep 0.01; done");
         eventConfig.setPollingCommand("sh -c \"echo this is a polling command simulation; exit 0\"");
         eventConfig.setAbortCommand("echo this is an echo abort command");
 
