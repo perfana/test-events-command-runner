@@ -36,7 +36,7 @@ In this example the first command has `useCommandForPolling` enabled, and will r
 But since the second command is also a `continueOnKeepAliveParticipant`, the `/tmp/test-run-2.busy` file should also
 be removed to actually have the test stopped.
 
-ALso when both `/tmp/test-run-1.busy` and `/tmp/test-run-2.busy` are removed the test will stop.
+The test will also stop when both `/tmp/test-run-1.busy` and `/tmp/test-run-2.busy` are removed.
 
 ```xml
 <plugins>
