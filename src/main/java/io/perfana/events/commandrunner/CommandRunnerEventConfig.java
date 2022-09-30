@@ -32,14 +32,16 @@ public class CommandRunnerEventConfig extends EventConfig {
 
     private boolean sendTestRunConfig = false;
 
+    private boolean useCommandForPolling = false;
+
     @Override
     public CommandRunnerEventContext toContext() {
-        return new CommandRunnerEventContext(super.toContext(), command, pollingCommand, abortCommand, afterTestCommand, sendTestRunConfig);
+        return new CommandRunnerEventContext(super.toContext(), command, pollingCommand, abortCommand, afterTestCommand, sendTestRunConfig, useCommandForPolling);
     }
 
     @Override
     public CommandRunnerEventContext toContext(TestContext override) {
-        return new CommandRunnerEventContext(super.toContext(override), command, pollingCommand, abortCommand, afterTestCommand, sendTestRunConfig);
+        return new CommandRunnerEventContext(super.toContext(override), command, pollingCommand, abortCommand, afterTestCommand, sendTestRunConfig, useCommandForPolling);
     }
 
     @Override
@@ -50,6 +52,7 @@ public class CommandRunnerEventConfig extends EventConfig {
                 ", abortCommand='" + abortCommand + '\'' +
                 ", afterTestCommand='" + afterTestCommand + '\'' +
                 ", sendTestRunConfig=" + sendTestRunConfig +
+                ", useCommandForPolling=" + useCommandForPolling +
                 '}';
     }
 
@@ -91,5 +94,13 @@ public class CommandRunnerEventConfig extends EventConfig {
 
     public void setAfterTestCommand(String afterTestCommand) {
         this.afterTestCommand = afterTestCommand;
+    }
+
+    public boolean isUseCommandForPolling() {
+        return useCommandForPolling;
+    }
+
+    public void setUseCommandForPolling(boolean useCommandForPolling) {
+        this.useCommandForPolling = useCommandForPolling;
     }
 }

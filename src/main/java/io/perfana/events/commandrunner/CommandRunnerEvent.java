@@ -157,6 +157,14 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
 
     @Override
     public void keepAlive() {
+
+        if (isContinueOnKeepAliveParticipant() && future != null && eventContext.isUseCommandForPolling() && future.isDone()) {
+            int exitCode = getExitCode(future);
+            String message = "The command is done (exit code: " + exitCode + ") and the command is used for polling: will request to stop test run.";
+            logger.info(message);
+            throw new StopTestRunException(message);
+        }
+
         String pollingCommand = eventContext.getPollingCommand();
 
         Future<ProcessResult> processResultFuture = runCommand(pollingCommand);
@@ -185,12 +193,26 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
             String message = "Received failed (non-zero) exit value for polling command (" + exitValue + ")." +
                     " Request to stop test run.";
             logger.info(message);
-            if (eventContext.isContinueOnKeepAliveParticipant()) {
+            if (isContinueOnKeepAliveParticipant()) {
                 throw new StopTestRunException(message);
             }
         }
         else {
             logger.info("Received success (zero) exit value for polling command, keep on running!");
         }
+    }
+
+    private static int getExitCode(Future<ProcessResult> future) {
+        ProcessResult processResult;
+        try {
+            processResult = future.get(1, TimeUnit.SECONDS);
+        } catch (InterruptedException e ) {
+            Thread.currentThread().interrupt();
+            return 8888;
+        } catch (Exception e) {
+            // unexpected, give "unexpected" error code
+            return 9999;
+        }
+        return processResult.getExitValue();
     }
 }

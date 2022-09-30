@@ -13,6 +13,11 @@ return success (exit code 0), a stop is requested.
 Only when _all_ polling commands that are indicated as `continueOnKeepAliveParticipant` request a stop,
 the test-run is actually stopped.
 
+If `useCommandForPolling` is true (default is false) and `continueOnKeepAliveParticipant` is true, 
+a check is made in each keep alive to see if the `command` is done/finished. 
+If so, it will request a stop. If also a `pollingCommand` is
+defined, that command will also be checked if the command is not done yet.
+
 Use `abortCommand` for a command that is called on an `abort-test` event. For instance, to stop a 
 remote running load test process.
 
@@ -26,6 +31,12 @@ Use `sendTestRunConfig` to send the command to Perfana test config. Disabled by 
 Be careful not to send secrets via this option.
 
 ## use
+
+In this example the first command has `useCommandForPolling` enabled, and will request a stop after 20 seconds of sleep.
+But since the second command is also a `continueOnKeepAliveParticipant`, the `/tmp/test-run-2.busy` file should also
+be removed to actually have the test stopped.
+
+ALso when both `/tmp/test-run-1.busy` and `/tmp/test-run-2.busy` are removed the test will stop.
 
 ```xml
 <plugins>
@@ -54,8 +65,11 @@ Be careful not to send secrets via this option.
                     <eventConfig implementation="io.perfana.events.commandrunner.CommandRunnerEventConfig">
                         <name>K6Runner1</name>
                         <continueOnKeepAliveParticipant>true</continueOnKeepAliveParticipant>
+                        <useCommandForPolling>true</useCommandForPolling>
                         <command>touch /tmp/test-run-1.busy; \
-                            echo command to start K6 runner 1 for ${testRunId}</command>
+                            echo command to start K6 runner 1 for ${testRunId}; \
+                            sleep 20
+                        </command>
                         <pollingCommand>ls /tmp/test-run-1.busy</pollingCommand>
                         <abortCommand>rm /tmp/test-run-1.busy; \
                             echo abort K6 runner 1</abortCommand>
