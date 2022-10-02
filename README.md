@@ -32,12 +32,11 @@ Be careful not to send secrets via this option.
 
 ## use
 
-In this example the first command has a simulated load test by sleeping 20 seconds.
-When this command is done, a stop test is requested.
-But since the second command is also a `continueOnKeepAliveParticipant`, the `/tmp/test-run-2.busy` file should also
-be removed to actually have the test stopped.
+In this example the first command has a simulated load test by sleeping 20 seconds, the second 24 seconds.
+When both commands are done, a stop test is requested.
 
-The test will also stop when both `/tmp/test-run-1.busy` and `/tmp/test-run-2.busy` are removed.
+The test will also stop when both `/tmp/test-run-1.busy` and `/tmp/test-run-2.busy` are removed before the 
+commands end, e.g. by running `rm -v /tmp/test-run-*.busy`.
 
 ```xml
 <plugins>
@@ -66,7 +65,7 @@ The test will also stop when both `/tmp/test-run-1.busy` and `/tmp/test-run-2.bu
                     <eventConfig implementation="io.perfana.events.commandrunner.CommandRunnerEventConfig">
                         <name>K6Runner1</name>
                         <continueOnKeepAliveParticipant>true</continueOnKeepAliveParticipant>
-                        <command>echo simulate a running load test; sleep 200; echo end load test simulation</command>
+                        <command>echo simulate a running load test; sleep 20; echo end load test simulation</command>
                         <onBeforeTest>touch /tmp/test-run-1.busy; echo command to start K6 runner 1 for ${testRunId};</onBeforeTest>
                         <onKeepAlive>ls /tmp/test-run-1.busy</onKeepAlive>
                         <onAbort>rm /tmp/test-run-1.busy</onAbort>
@@ -75,7 +74,7 @@ The test will also stop when both `/tmp/test-run-1.busy` and `/tmp/test-run-2.bu
                     <eventConfig implementation="io.perfana.events.commandrunner.CommandRunnerEventConfig">
                         <name>K6Runner2</name>
                         <continueOnKeepAliveParticipant>true</continueOnKeepAliveParticipant>
-                        <command>echo simulate a running load test; sleep 210; echo end load test simulation</command>
+                        <command>echo simulate a running load test; sleep 24; echo end load test simulation</command>
                         <onBeforeTest>touch /tmp/test-run-2.busy; \
                             echo command to start K6 runner 2</onBeforeTest>
                         <onKeepAlive>ls /tmp | grep -q test-run-2.busy</onKeepAlive>
