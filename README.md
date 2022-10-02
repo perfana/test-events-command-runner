@@ -6,8 +6,8 @@ Use `onBeforeTest` for a command that is called on the `before-test` event. For 
 test database. If the command is a `readyForStartParticipant`, the start test will be delayed until this
 command is finished.
 
-Use the `command` tag for the command to run during the test run, or as load test actually.
-When the command ends and the command is `continueOnKeepAliveParticipant`, a stop test request is sent.
+Use the `onTestStart` for the command to run during the test run (e.g. the actual load test).
+When the command ends and `continueOnKeepAliveParticipant` is true, a stop test request is sent.
 If the command runs for a long time (e.g. a non-self ending load test), it is cancelled at the end of the
 test run in the `after-test` or `abort-test` events.
 
@@ -65,7 +65,7 @@ commands end, e.g. by running `rm -v /tmp/test-run-*.busy`.
                     <eventConfig implementation="io.perfana.events.commandrunner.CommandRunnerEventConfig">
                         <name>K6Runner1</name>
                         <continueOnKeepAliveParticipant>true</continueOnKeepAliveParticipant>
-                        <command>echo simulate a running load test; sleep 20; echo end load test simulation</command>
+                        <onTestStart>echo simulate a running load test; sleep 20; echo end load test simulation</onTestStart>
                         <onBeforeTest>touch /tmp/test-run-1.busy; echo command to start K6 runner 1 for ${testRunId};</onBeforeTest>
                         <onKeepAlive>ls /tmp/test-run-1.busy</onKeepAlive>
                         <onAbort>rm /tmp/test-run-1.busy</onAbort>
@@ -74,7 +74,7 @@ commands end, e.g. by running `rm -v /tmp/test-run-*.busy`.
                     <eventConfig implementation="io.perfana.events.commandrunner.CommandRunnerEventConfig">
                         <name>K6Runner2</name>
                         <continueOnKeepAliveParticipant>true</continueOnKeepAliveParticipant>
-                        <command>echo simulate a running load test; sleep 24; echo end load test simulation</command>
+                        <onTestStart>echo simulate a running load test; sleep 24; echo end load test simulation</onTestStart>
                         <onBeforeTest>touch /tmp/test-run-2.busy; \
                             echo command to start K6 runner 2</onBeforeTest>
                         <onKeepAlive>ls /tmp | grep -q test-run-2.busy</onKeepAlive>

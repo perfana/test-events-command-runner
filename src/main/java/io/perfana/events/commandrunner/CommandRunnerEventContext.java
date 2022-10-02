@@ -23,16 +23,16 @@ import java.util.Objects;
 @Immutable
 public class CommandRunnerEventContext extends EventContext {
 
-    private final String command;
+    private final String onTestStart;
     private final String onBeforeTest;
     private final String onKeepAlive;
     private final String onAbort;
     private final String onAfterTest;
     private final boolean sendTestRunConfig;
 
-    protected CommandRunnerEventContext(EventContext context, String onBeforeTest, String command, String onKeepAlive, String onAbort, String onAfterTest, boolean sendTestRunConfig) {
+    protected CommandRunnerEventContext(EventContext context, String onBeforeTest, String onTestStart, String onKeepAlive, String onAbort, String onAfterTest, boolean sendTestRunConfig) {
         super(context, CommandRunnerEventFactory.class.getName());
-        this.command = command;
+        this.onTestStart = onTestStart;
         this.onBeforeTest = onBeforeTest;
         this.onKeepAlive = onKeepAlive;
         this.onAbort = onAbort;
@@ -40,8 +40,8 @@ public class CommandRunnerEventContext extends EventContext {
         this.sendTestRunConfig = sendTestRunConfig;
     }
 
-    public String getCommand() {
-        return command;
+    public String getOnTestStart() {
+        return onTestStart;
     }
 
     public String getOnKeepAlive() {
@@ -67,7 +67,7 @@ public class CommandRunnerEventContext extends EventContext {
     @Override
     public String toString() {
         return "CommandRunnerEventContext{" +
-                "command='" + command + '\'' +
+                "onTestStart='" + onTestStart + '\'' +
                 ", onBeforeTest='" + onBeforeTest + '\'' +
                 ", onKeepAlive='" + onKeepAlive + '\'' +
                 ", onAbort='" + onAbort + '\'' +
@@ -82,11 +82,11 @@ public class CommandRunnerEventContext extends EventContext {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         CommandRunnerEventContext that = (CommandRunnerEventContext) o;
-        return sendTestRunConfig == that.sendTestRunConfig && Objects.equals(command, that.command) && Objects.equals(onBeforeTest, that.onBeforeTest) && Objects.equals(onKeepAlive, that.onKeepAlive) && Objects.equals(onAbort, that.onAbort) && Objects.equals(onAfterTest, that.onAfterTest);
+        return sendTestRunConfig == that.sendTestRunConfig && Objects.equals(onTestStart, that.onTestStart) && Objects.equals(onBeforeTest, that.onBeforeTest) && Objects.equals(onKeepAlive, that.onKeepAlive) && Objects.equals(onAbort, that.onAbort) && Objects.equals(onAfterTest, that.onAfterTest);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), command, onBeforeTest, onKeepAlive, onAbort, onAfterTest, sendTestRunConfig);
+        return Objects.hash(super.hashCode(), onTestStart, onBeforeTest, onKeepAlive, onAbort, onAfterTest, sendTestRunConfig);
     }
 }

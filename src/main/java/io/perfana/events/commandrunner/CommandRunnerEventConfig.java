@@ -22,7 +22,7 @@ import net.jcip.annotations.NotThreadSafe;
 @NotThreadSafe
 public class CommandRunnerEventConfig extends EventConfig {
 
-    private String command = "";
+    private String onTestStart = "";
 
     private String onBeforeTest = "";
     private String onKeepAlive = "";
@@ -35,12 +35,12 @@ public class CommandRunnerEventConfig extends EventConfig {
 
     @Override
     public CommandRunnerEventContext toContext() {
-        return new CommandRunnerEventContext(super.toContext(), onBeforeTest, command, onKeepAlive, onAbort, onAfterTest, sendTestRunConfig);
+        return new CommandRunnerEventContext(super.toContext(), onBeforeTest, onTestStart, onKeepAlive, onAbort, onAfterTest, sendTestRunConfig);
     }
 
     @Override
     public CommandRunnerEventContext toContext(TestContext override) {
-        return new CommandRunnerEventContext(super.toContext(override), onBeforeTest, command, onKeepAlive, onAbort, onAfterTest, sendTestRunConfig);
+        return new CommandRunnerEventContext(super.toContext(override), onBeforeTest, onTestStart, onKeepAlive, onAbort, onAfterTest, sendTestRunConfig);
     }
 
     public String getOnBeforeTest() {
@@ -51,12 +51,12 @@ public class CommandRunnerEventConfig extends EventConfig {
         this.onBeforeTest = onBeforeTest;
     }
 
-    public void setCommand(String command) {
-        this.command = command;
+    public void setOnTestStart(String onTestStart) {
+        this.onTestStart = onTestStart;
     }
 
-    public String getCommand() {
-        return command;
+    public String getOnTestStart() {
+        return onTestStart;
     }
 
     public boolean isSendTestRunConfig() {
@@ -94,7 +94,7 @@ public class CommandRunnerEventConfig extends EventConfig {
     @Override
     public String toString() {
         return "CommandRunnerEventConfig{" +
-                "command='" + command + '\'' +
+                "onTestStart='" + onTestStart + '\'' +
                 ", onBeforeTest='" + onBeforeTest + '\'' +
                 ", onKeepAlive='" + onKeepAlive + '\'' +
                 ", onAbort='" + onAbort + '\'' +
