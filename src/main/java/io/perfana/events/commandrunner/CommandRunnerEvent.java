@@ -162,10 +162,10 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
 
     private Future<ProcessResult> runCommand(String command, String commandType) {
         if (command.isEmpty()) {
-            logger.warn("No command to run.");
+            logger.debug("No command to run for " + commandType);
             return null;
         }
-        logger.info("About to run " + commandType + " [" + command + "] for [" + eventContext.getTestContext().getTestRunId() + "]");
+        logger.info("About to run " + commandType + " [" + command + "]");
 
         String wrappedCommand;
         if (command.startsWith("sh -c")) {
