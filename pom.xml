@@ -23,7 +23,7 @@
 
     <groupId>io.perfana</groupId>
     <artifactId>test-events-command-runner</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.1-SNAPSHOT</version>
     <description>Run a command via the command process runner. Abort when needed.</description>
     <packaging>jar</packaging>
 
