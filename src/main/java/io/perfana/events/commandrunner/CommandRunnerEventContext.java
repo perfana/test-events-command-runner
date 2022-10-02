@@ -24,59 +24,55 @@ import java.util.Objects;
 public class CommandRunnerEventContext extends EventContext {
 
     private final String command;
-
-    private final String pollingCommand;
-
-    private final String abortCommand;
-
-    private final String afterTestCommand;
+    private final String onBeforeTest;
+    private final String onKeepAlive;
+    private final String onAbort;
+    private final String onAfterTest;
     private final boolean sendTestRunConfig;
 
-    private final boolean useCommandForPolling;
-
-    protected CommandRunnerEventContext(EventContext context, String command, String pollingCommand, String abortCommand, String afterTestCommand, boolean sendTestRunConfig, boolean useCommandForPolling) {
+    protected CommandRunnerEventContext(EventContext context, String onBeforeTest, String command, String onKeepAlive, String onAbort, String onAfterTest, boolean sendTestRunConfig) {
         super(context, CommandRunnerEventFactory.class.getName());
         this.command = command;
-        this.pollingCommand = pollingCommand;
-        this.abortCommand = abortCommand;
-        this.afterTestCommand = afterTestCommand;
+        this.onBeforeTest = onBeforeTest;
+        this.onKeepAlive = onKeepAlive;
+        this.onAbort = onAbort;
+        this.onAfterTest = onAfterTest;
         this.sendTestRunConfig = sendTestRunConfig;
-        this.useCommandForPolling = useCommandForPolling;
     }
 
     public String getCommand() {
         return command;
     }
 
-    public String getPollingCommand() {
-        return pollingCommand;
+    public String getOnKeepAlive() {
+        return onKeepAlive;
     }
 
-    public String getAbortCommand() {
-        return abortCommand;
+    public String getOnAbort() {
+        return onAbort;
     }
 
-    public String getAfterTestCommand() {
-        return afterTestCommand;
+    public String getOnAfterTest() {
+        return onAfterTest;
+    }
+
+    public String getOnBeforeTest() {
+        return onBeforeTest;
     }
 
     public boolean isSendTestRunConfig() {
         return sendTestRunConfig;
     }
 
-    public boolean isUseCommandForPolling() {
-        return useCommandForPolling;
-    }
-
     @Override
     public String toString() {
         return "CommandRunnerEventContext{" +
                 "command='" + command + '\'' +
-                ", pollingCommand='" + pollingCommand + '\'' +
-                ", abortCommand='" + abortCommand + '\'' +
-                ", afterTestCommand='" + afterTestCommand + '\'' +
+                ", onBeforeTest='" + onBeforeTest + '\'' +
+                ", onKeepAlive='" + onKeepAlive + '\'' +
+                ", onAbort='" + onAbort + '\'' +
+                ", onAfterTest='" + onAfterTest + '\'' +
                 ", sendTestRunConfig=" + sendTestRunConfig +
-                ", useCommandForPolling=" + useCommandForPolling +
                 '}';
     }
 
@@ -86,11 +82,11 @@ public class CommandRunnerEventContext extends EventContext {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         CommandRunnerEventContext that = (CommandRunnerEventContext) o;
-        return sendTestRunConfig == that.sendTestRunConfig && useCommandForPolling == that.useCommandForPolling && Objects.equals(command, that.command) && Objects.equals(pollingCommand, that.pollingCommand) && Objects.equals(abortCommand, that.abortCommand) && Objects.equals(afterTestCommand, that.afterTestCommand);
+        return sendTestRunConfig == that.sendTestRunConfig && Objects.equals(command, that.command) && Objects.equals(onBeforeTest, that.onBeforeTest) && Objects.equals(onKeepAlive, that.onKeepAlive) && Objects.equals(onAbort, that.onAbort) && Objects.equals(onAfterTest, that.onAfterTest);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), command, pollingCommand, abortCommand, afterTestCommand, sendTestRunConfig, useCommandForPolling);
+        return Objects.hash(super.hashCode(), command, onBeforeTest, onKeepAlive, onAbort, onAfterTest, sendTestRunConfig);
     }
 }

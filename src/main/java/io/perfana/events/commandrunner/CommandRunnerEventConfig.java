@@ -24,36 +24,31 @@ public class CommandRunnerEventConfig extends EventConfig {
 
     private String command = "";
 
-    private String pollingCommand = "";
+    private String onBeforeTest = "";
+    private String onKeepAlive = "";
 
-    private String abortCommand = "";
+    private String onAbort = "";
 
-    private String afterTestCommand = "";
+    private String onAfterTest = "";
 
     private boolean sendTestRunConfig = false;
 
-    private boolean useCommandForPolling = false;
-
     @Override
     public CommandRunnerEventContext toContext() {
-        return new CommandRunnerEventContext(super.toContext(), command, pollingCommand, abortCommand, afterTestCommand, sendTestRunConfig, useCommandForPolling);
+        return new CommandRunnerEventContext(super.toContext(), onBeforeTest, command, onKeepAlive, onAbort, onAfterTest, sendTestRunConfig);
     }
 
     @Override
     public CommandRunnerEventContext toContext(TestContext override) {
-        return new CommandRunnerEventContext(super.toContext(override), command, pollingCommand, abortCommand, afterTestCommand, sendTestRunConfig, useCommandForPolling);
+        return new CommandRunnerEventContext(super.toContext(override), onBeforeTest, command, onKeepAlive, onAbort, onAfterTest, sendTestRunConfig);
     }
 
-    @Override
-    public String toString() {
-        return "CommandRunnerEventConfig{" +
-                "command='" + command + '\'' +
-                ", pollingCommand='" + pollingCommand + '\'' +
-                ", abortCommand='" + abortCommand + '\'' +
-                ", afterTestCommand='" + afterTestCommand + '\'' +
-                ", sendTestRunConfig=" + sendTestRunConfig +
-                ", useCommandForPolling=" + useCommandForPolling +
-                '}';
+    public String getOnBeforeTest() {
+        return onBeforeTest;
+    }
+
+    public void setOnBeforeTest(String onBeforeTest) {
+        this.onBeforeTest = onBeforeTest;
     }
 
     public void setCommand(String command) {
@@ -72,35 +67,40 @@ public class CommandRunnerEventConfig extends EventConfig {
         this.sendTestRunConfig = sendTestRunConfig;
     }
 
-    public String getPollingCommand() {
-        return pollingCommand;
+    public String getOnKeepAlive() {
+        return onKeepAlive;
     }
 
-    public void setPollingCommand(String pollingCommand) {
-        this.pollingCommand = pollingCommand;
+    public void setOnKeepAlive(String onKeepAlive) {
+        this.onKeepAlive = onKeepAlive;
     }
 
-    public String getAbortCommand() {
-        return abortCommand;
+    public String getOnAbort() {
+        return onAbort;
     }
 
-    public void setAbortCommand(String abortCommand) {
-        this.abortCommand = abortCommand;
+    public void setOnAbort(String onAbort) {
+        this.onAbort = onAbort;
     }
 
-    public String getAfterTestCommand() {
-        return afterTestCommand;
+    public String getOnAfterTest() {
+        return onAfterTest;
     }
 
-    public void setAfterTestCommand(String afterTestCommand) {
-        this.afterTestCommand = afterTestCommand;
+    public void setOnAfterTest(String onAfterTest) {
+        this.onAfterTest = onAfterTest;
     }
 
-    public boolean isUseCommandForPolling() {
-        return useCommandForPolling;
+    @Override
+    public String toString() {
+        return "CommandRunnerEventConfig{" +
+                "command='" + command + '\'' +
+                ", onBeforeTest='" + onBeforeTest + '\'' +
+                ", onKeepAlive='" + onKeepAlive + '\'' +
+                ", onAbort='" + onAbort + '\'' +
+                ", onAfterTest='" + onAfterTest + '\'' +
+                ", sendTestRunConfig=" + sendTestRunConfig +
+                '}';
     }
 
-    public void setUseCommandForPolling(boolean useCommandForPolling) {
-        this.useCommandForPolling = useCommandForPolling;
-    }
 }

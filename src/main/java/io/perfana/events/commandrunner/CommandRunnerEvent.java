@@ -53,26 +53,119 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
 
         String pluginName = CommandRunnerEvent.class.getSimpleName() + "-" + eventContext.getName();
 
-        String command = eventContext.getCommand();
-
-        future = runCommand(command);
-
-        // disable sending of command
+        // default sending of command is disabled: might contain secrets
         if (eventContext.isSendTestRunConfig()) {
             String tags = "command-runner";
             EventMessage message = TestRunConfigUtil.createTestRunConfigMessageKeys(pluginName, createTestRunConfigLines(), tags);
             this.eventMessageBus.send(message);
         }
 
-        this.eventMessageBus.send(EventMessage.builder().pluginName(pluginName).message("Go!").build());
+        String command = eventContext.getOnBeforeTest();
+
+        Future<ProcessResult> beforeTestCommandFuture = runCommand(command, "beforeTest");
+
+        if (beforeTestCommandFuture == null) {
+            logger.debug("No result available for beforeTest command");
+        }
+        else {
+            waitForCommandToFinishOrTimeout(beforeTestCommandFuture);
+        }
+
+        if (eventContext.isReadyForStartParticipant()) {
+            this.eventMessageBus.send(EventMessage.builder().pluginName(pluginName).message("Go!").build());
+        }
+
     }
 
-    private Future<ProcessResult> runCommand(String command) {
+    private void waitForCommandToFinishOrTimeout(Future<ProcessResult> command) {
+        try {
+            ProcessResult processResult = command.get(120, TimeUnit.SECONDS);
+
+            if (processResult.getExitValue() != 0) {
+                logger.warn("Command did not end successfully. Exit code: " + processResult.getExitValue());
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.warn("Command got interrupted");
+        } catch (ExecutionException e) {
+            throw new EventSchedulerRuntimeException("Command failed.", e);
+        } catch (TimeoutException e) {
+            command.cancel(true);
+            throw new EventSchedulerRuntimeException("Command timed out, cancelled command.", e);
+        }
+    }
+
+    @Override
+    public void startTest() {
+        String command = eventContext.getCommand();
+        future = runCommand(command, "startTest");
+    }
+
+    @Override
+    public void keepAlive() {
+
+        if (isContinueOnKeepAliveParticipant() && future != null && future.isDone()) {
+            int exitCode = getExitCode(future);
+            String message = "The command is done (exit code: " + exitCode + ") and this is a continueOnKeepAlive participant: will request to stop test run.";
+            logger.info(message);
+            throw new StopTestRunException(message);
+        }
+
+        String pollingCommand = eventContext.getOnKeepAlive();
+
+        Future<ProcessResult> processResultFuture = runCommand(pollingCommand, "keepAlive");
+
+        if (processResultFuture == null) {
+            return;
+        }
+
+        ProcessResult processResult;
+        try {
+            processResult = processResultFuture.get(30, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            logger.warn("Polling command got interrupted! " + e.getMessage());
+            Thread.currentThread().interrupt();
+            return;
+        } catch (ExecutionException e) {
+            logger.warn("Polling command cannot be executed! " + e.getMessage());
+            return;
+        } catch (TimeoutException e) {
+            logger.warn("Polling command got timeout! " + e.getMessage());
+            return;
+        }
+
+        int exitValue = processResult.getExitValue();
+        if (exitValue != 0) {
+            String message = "Received failed (non-zero) exit value for polling command (" + exitValue + ")." +
+                    " Request to stop test run.";
+            logger.info(message);
+            if (isContinueOnKeepAliveParticipant()) {
+                throw new StopTestRunException(message);
+            }
+        }
+        else {
+            logger.info("Received success (zero) exit value for polling command, keep on running!");
+        }
+    }
+
+    @Override
+    public void abortTest() {
+        cancelCommand();
+        abortCommand();
+    }
+
+    @Override
+    public void afterTest() {
+        cancelCommand();
+        runCommand(eventContext.getOnAfterTest(), "afterTest");
+    }
+
+    private Future<ProcessResult> runCommand(String command, String commandType) {
         if (command.isEmpty()) {
             logger.warn("No command to run.");
             return null;
         }
-        logger.info("About to run [" + command + "] for [" + eventContext.getTestContext().getTestRunId() + "]");
+        logger.info("About to run " + commandType + " [" + command + "] for [" + eventContext.getTestContext().getTestRunId() + "]");
 
         String wrappedCommand;
         if (command.startsWith("sh -c")) {
@@ -124,81 +217,23 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
         return commandList;
     }
 
-    @Override
-    public void abortTest() {
-        cancelCommand();
-        abortCommand();
-    }
-
     private void abortCommand() {
-        String abortCommand = eventContext.getAbortCommand();
-        runCommand(abortCommand);
+        String abortCommand = eventContext.getOnAbort();
+        runCommand(abortCommand, "abortCommand");
     }
 
     private void cancelCommand() {
         String command = eventContext.getCommand();
         if (future != null) {
+            logger.debug("There is a future for [ " + command + "]");
             if (!future.isDone()) {
                 logger.info("About to cancel [" + command + "] for [" + eventContext.getTestContext().getTestRunId() + "]");
                 boolean cancel = future.cancel(true);
-                logger.info("Cancel [" + cancel + "] for [" + eventContext.getTestContext().getTestRunId() + "]");
+                logger.debug("Cancel [" + cancel + "] for [" + eventContext.getTestContext().getTestRunId() + "]");
             }
             else {
                 logger.info("No cancel needed for finished command for [" + eventContext.getTestContext().getTestRunId() + "]");
             }
-        }
-    }
-
-    @Override
-    public void afterTest() {
-        cancelCommand();
-        runCommand(eventContext.getAfterTestCommand());
-    }
-
-    @Override
-    public void keepAlive() {
-
-        if (isContinueOnKeepAliveParticipant() && future != null && eventContext.isUseCommandForPolling() && future.isDone()) {
-            int exitCode = getExitCode(future);
-            String message = "The command is done (exit code: " + exitCode + ") and the command is used for polling: will request to stop test run.";
-            logger.info(message);
-            throw new StopTestRunException(message);
-        }
-
-        String pollingCommand = eventContext.getPollingCommand();
-
-        Future<ProcessResult> processResultFuture = runCommand(pollingCommand);
-
-        if (processResultFuture == null) {
-            return;
-        }
-
-        ProcessResult processResult;
-        try {
-            processResult = processResultFuture.get(30, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            logger.warn("Polling command got interrupted! " + e.getMessage());
-            Thread.currentThread().interrupt();
-            return;
-        } catch (ExecutionException e) {
-            logger.warn("Polling command cannot be executed! " + e.getMessage());
-            return;
-        } catch (TimeoutException e) {
-            logger.warn("Polling command got timeout! " + e.getMessage());
-            return;
-        }
-
-        int exitValue = processResult.getExitValue();
-        if (exitValue != 0) {
-            String message = "Received failed (non-zero) exit value for polling command (" + exitValue + ")." +
-                    " Request to stop test run.";
-            logger.info(message);
-            if (isContinueOnKeepAliveParticipant()) {
-                throw new StopTestRunException(message);
-            }
-        }
-        else {
-            logger.info("Received success (zero) exit value for polling command, keep on running!");
         }
     }
 
