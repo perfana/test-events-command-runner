@@ -65,7 +65,7 @@ commands end, e.g. by running `rm -v /tmp/test-run-*.busy`.
                     <eventConfig implementation="io.perfana.events.commandrunner.CommandRunnerEventConfig">
                         <name>K6Runner1</name>
                         <continueOnKeepAliveParticipant>true</continueOnKeepAliveParticipant>
-                        <onTestStart>echo simulate a running load test; sleep 20; echo end load test simulation</onTestStart>
+                        <onStartTest>echo simulate a running load test; sleep 20; echo end load test simulation</onStartTest>
                         <onBeforeTest>touch /tmp/test-run-1.busy; echo command to start K6 runner 1 for ${testRunId};</onBeforeTest>
                         <onKeepAlive>ls /tmp/test-run-1.busy</onKeepAlive>
                         <onAbort>rm /tmp/test-run-1.busy</onAbort>
@@ -74,7 +74,7 @@ commands end, e.g. by running `rm -v /tmp/test-run-*.busy`.
                     <eventConfig implementation="io.perfana.events.commandrunner.CommandRunnerEventConfig">
                         <name>K6Runner2</name>
                         <continueOnKeepAliveParticipant>true</continueOnKeepAliveParticipant>
-                        <onTestStart>echo simulate a running load test; sleep 24; echo end load test simulation</onTestStart>
+                        <onStartTest>echo simulate a running load test; sleep 24; echo end load test simulation</onStartTest>
                         <onBeforeTest>touch /tmp/test-run-2.busy; \
                             echo command to start K6 runner 2</onBeforeTest>
                         <onKeepAlive>ls /tmp | grep -q test-run-2.busy</onKeepAlive>
