@@ -32,7 +32,7 @@ class CommandRunnerEventTest {
         eventConfig.setTestConfig(TestConfig.builder().build());
         eventConfig.setSendTestRunConfig(true);
         eventConfig.setOnBeforeTest("echo hello there");
-        eventConfig.setOnTestStart("echo something >&2; for (( ; ; )) do echo $(date); sleep 0.01; done");
+        eventConfig.setOnStartTest("echo something >&2; for (( ; ; )) do echo $(date); sleep 0.01; done");
         eventConfig.setOnKeepAlive("sh -c \"echo this is a polling command simulation; exit 0\"");
         eventConfig.setOnAbort("echo this is an echo abort command");
 

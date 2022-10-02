@@ -97,7 +97,7 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
 
     @Override
     public void startTest() {
-        String command = eventContext.getOnTestStart();
+        String command = eventContext.getOnStartTest();
         future = runCommand(command, "startTest");
     }
 
@@ -197,7 +197,7 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
     private Map<String, String> createTestRunConfigLines() {
         String prefix = "event." + eventContext.getName() + ".";
         Map<String, String> lines = new HashMap<>();
-        lines.put(prefix + "command", eventContext.getOnTestStart());
+        lines.put(prefix + "command", eventContext.getOnStartTest());
         return lines;
     }
 
@@ -223,7 +223,7 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
     }
 
     private void cancelCommand() {
-        String command = eventContext.getOnTestStart();
+        String command = eventContext.getOnStartTest();
         if (future != null) {
             logger.debug("There is a future for [ " + command + "]");
             if (!future.isDone()) {
