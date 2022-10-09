@@ -34,12 +34,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> {
-
-    public static final Pattern REGEX_SPLIT_QUOTES = Pattern.compile("\"([^\"]*)\"|(\\S+)");
 
     private Future<ProcessResult> future;
 
@@ -167,15 +163,7 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
         }
         logger.info("About to run " + commandType + " [" + command + "]");
 
-        String wrappedCommand;
-        if (command.startsWith("sh -c")) {
-            wrappedCommand = command;
-        }
-        else {
-            wrappedCommand = "sh -c \"" + escapeDoubleQuotes(command) + "\"";
-        }
-
-        List<String> commandList = splitCommand(wrappedCommand);
+        List<String> commandList = createCommandListWithShWrapper(command);
 
         Future<ProcessResult> myProcessResult;
         try {
@@ -190,10 +178,6 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
         return myProcessResult;
     }
 
-    private String escapeDoubleQuotes(String command) {
-        return command.replace("\"", "\\\"");
-    }
-
     private Map<String, String> createTestRunConfigLines() {
         String prefix = "event." + eventContext.getName() + ".";
         Map<String, String> lines = new HashMap<>();
@@ -201,19 +185,23 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
         return lines;
     }
 
-    private List<String> splitCommand(String command) {
-        // https://stackoverflow.com/questions/3366281/tokenizing-a-string-but-ignoring-delimiters-within-quotes
-        Matcher m = REGEX_SPLIT_QUOTES.matcher(command);
-        List<String> commandList = new ArrayList<>();
-        while (m.find()) {
-            if (m.group(1) != null) {
-                // Quoted
-                commandList.add(m.group(1));
-            } else {
-                // Plain
-                commandList.add(m.group(2));
+    public static List<String> createCommandListWithShWrapper(String command) {
+        String strippedCommand;
+        if (command.startsWith("sh -c")) {
+            strippedCommand = command.substring("sh -c".length()).trim();
+            if ((strippedCommand.startsWith("'") && strippedCommand.endsWith("'"))
+                    || (strippedCommand.startsWith("\"") && strippedCommand.endsWith("\""))) {
+                strippedCommand = strippedCommand.substring(1, strippedCommand.length() - 1);
             }
         }
+        else {
+            strippedCommand = command;
+        }
+
+        List<String> commandList = new ArrayList<>();
+        commandList.add("sh");
+        commandList.add("-c");
+        commandList.add(strippedCommand.trim());
         return commandList;
     }
 
