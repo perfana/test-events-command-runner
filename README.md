@@ -6,7 +6,7 @@ Use `onBeforeTest` for a command that is called on the `before-test` event. For 
 test database. If the command is a `readyForStartParticipant`, the start test will be delayed until this
 command is finished.
 
-Use the `onTestStart` for the command to run during the test run (e.g. the actual load test).
+Use the `onStartTest` for the command to run during the test run (e.g. the actual load test).
 When the command ends and `continueOnKeepAliveParticipant` is true, a stop test request is sent.
 If the command runs for a long time (e.g. a non-self ending load test), it is cancelled at the end of the
 test run in the `after-test` or `abort-test` events.
