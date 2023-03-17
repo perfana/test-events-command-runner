@@ -17,6 +17,7 @@ package io.perfana.events.commandrunner;
 
 import io.perfana.eventscheduler.api.EventAdapter;
 import io.perfana.eventscheduler.api.EventLogger;
+import io.perfana.eventscheduler.api.config.TestContext;
 import io.perfana.eventscheduler.api.message.EventMessage;
 import io.perfana.eventscheduler.api.message.EventMessageBus;
 import io.perfana.eventscheduler.exception.EventSchedulerRuntimeException;
@@ -39,8 +40,8 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
 
     private Future<ProcessResult> future;
 
-    public CommandRunnerEvent(CommandRunnerEventContext eventContext, EventMessageBus messageBus, EventLogger logger) {
-        super(eventContext, messageBus, logger);
+    public CommandRunnerEvent(CommandRunnerEventContext eventContext, TestContext testContext, EventMessageBus messageBus, EventLogger logger) {
+        super(eventContext, testContext, messageBus, logger);
         this.eventMessageBus.addReceiver(m -> logger.debug("Received message: " + m));
     }
 
@@ -215,12 +216,12 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
         if (future != null) {
             logger.debug("There is a future for [ " + command + "]");
             if (!future.isDone()) {
-                logger.info("About to cancel [" + command + "] for [" + eventContext.getTestContext().getTestRunId() + "]");
+                logger.info("About to cancel [" + command + "] for [" + testContext.getTestRunId() + "]");
                 boolean cancel = future.cancel(true);
-                logger.debug("Cancel [" + cancel + "] for [" + eventContext.getTestContext().getTestRunId() + "]");
+                logger.debug("Cancel [" + cancel + "] for [" + testContext.getTestRunId() + "]");
             }
             else {
-                logger.info("No cancel needed for finished command for [" + eventContext.getTestContext().getTestRunId() + "]");
+                logger.info("No cancel needed for finished command for [" + testContext.getTestRunId() + "]");
             }
         }
     }

@@ -29,7 +29,6 @@ class CommandRunnerEventTest {
         eventConfig.setEventFactory(CommandRunnerEventFactory.class.getSimpleName());
         eventConfig.setName("myEvent1");
         eventConfig.setEnabled(true);
-        eventConfig.setTestConfig(TestConfig.builder().build());
         eventConfig.setSendTestRunConfig(true);
         eventConfig.setOnBeforeTest("echo hello there");
         eventConfig.setOnStartTest("echo something >&2; for (( ; ; )) do echo $(date); sleep 0.01; done");
@@ -38,7 +37,7 @@ class CommandRunnerEventTest {
 
         EventMessageBus messageBus = new EventMessageBusSimple();
 
-        CommandRunnerEvent event = new CommandRunnerEvent(eventConfig.toContext(), messageBus, EventLoggerStdOut.INSTANCE);
+        CommandRunnerEvent event = new CommandRunnerEvent(eventConfig.toContext(), TestConfig.builder().build().toContext(), messageBus, EventLoggerStdOut.INSTANCE);
         event.beforeTest();
         event.keepAlive();
         try {
