@@ -35,6 +35,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> {
 
@@ -50,6 +51,8 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
 
         String pluginName = CommandRunnerEvent.class.getSimpleName() + "-" + eventContext.getName();
 
+        String newTestRunId = testContext.getTestRunId();
+
         // default sending of command is disabled: might contain secrets
         if (eventContext.isSendTestRunConfig()) {
             String tags = "command-runner";
@@ -58,6 +61,8 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
         }
 
         String command = eventContext.getOnBeforeTest();
+
+        command = command.replace("__testRunId__", newTestRunId);
 
         Future<ProcessResult> beforeTestCommandFuture = runCommand(command, "beforeTest");
 
@@ -166,6 +171,8 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
 
         List<String> commandList = createCommandListWithShWrapper(command);
 
+        commandList = injectTestRunIdInCommandList(commandList);
+
         Future<ProcessResult> myProcessResult;
         try {
             myProcessResult = new ProcessExecutor()
@@ -177,6 +184,13 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
             throw new EventSchedulerRuntimeException("Failed to run command: " + command, e);
         }
         return myProcessResult;
+    }
+
+    private List<String> injectTestRunIdInCommandList(List<String> commandList) {
+        String testRunId = testContext.getTestRunId();
+        return commandList.stream()
+                .map(s -> s.replace("__testRunId__", testRunId))
+                .collect(Collectors.toList());
     }
 
     private Map<String, String> createTestRunConfigLines() {

@@ -30,6 +30,10 @@ on the `PATH` of the process that runs this (e.g. the CI server).
 Use `sendTestRunConfig` to send the command to Perfana test config. Disabled by default.
 Be careful not to send secrets via this option.
 
+# test run id
+
+In commands, use `__testRunId__` to be replaced by the test run id from the current test context.
+
 ## use
 
 In this example the first command has a simulated load test by sleeping 20 seconds, the second 24 seconds.
