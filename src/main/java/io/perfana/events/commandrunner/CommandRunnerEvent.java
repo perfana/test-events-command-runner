@@ -27,10 +27,7 @@ import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.ProcessResult;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -40,6 +37,8 @@ import java.util.stream.Collectors;
 public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> {
 
     private Future<ProcessResult> future;
+
+    private boolean isWindows = System.getProperty("os.name").startsWith("Windows");
 
     public CommandRunnerEvent(CommandRunnerEventContext eventContext, TestContext testContext, EventMessageBus messageBus, EventLogger logger) {
         super(eventContext, testContext, messageBus, logger);
@@ -169,7 +168,14 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
         }
         logger.info("About to run " + commandType + " [" + command + "]");
 
-        List<String> commandList = createCommandListWithShWrapper(command);
+        List<String> commandList;
+
+        if (isWindows) {
+            commandList = createCommandList(command);
+        }
+        else {
+            commandList = createCommandListWithShWrapper(command);
+        }
 
         commandList = injectTestRunIdInCommandList(commandList);
 
@@ -184,6 +190,10 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
             throw new EventSchedulerRuntimeException("Failed to run command: " + command, e);
         }
         return myProcessResult;
+    }
+
+    public static List<String> createCommandList(String command) {
+        return Arrays.asList(command.split("\\s+"));
     }
 
     private List<String> injectTestRunIdInCommandList(List<String> commandList) {

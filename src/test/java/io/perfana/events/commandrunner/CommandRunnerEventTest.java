@@ -21,6 +21,10 @@ import io.perfana.eventscheduler.api.message.EventMessageBus;
 import io.perfana.eventscheduler.log.EventLoggerStdOut;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 class CommandRunnerEventTest {
 
     @Test
@@ -54,4 +58,13 @@ class CommandRunnerEventTest {
         // check it does not blow with an Exception...
 
     }
+
+    @Test
+    void testCommandSplit() {
+        List<String> commandList = CommandRunnerEvent.createCommandList("abc def 123  \"333\"");
+        assertEquals(4, commandList.size());
+        assertEquals("abc", commandList.get(0));
+        assertEquals("\"333\"", commandList.get(3));
+    }
+
 }
