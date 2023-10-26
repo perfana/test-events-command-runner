@@ -38,11 +38,20 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
 
     private Future<ProcessResult> future;
 
-    private boolean isWindows = System.getProperty("os.name").startsWith("Windows");
+    private final boolean isWindows;
 
     public CommandRunnerEvent(CommandRunnerEventContext eventContext, TestContext testContext, EventMessageBus messageBus, EventLogger logger) {
         super(eventContext, testContext, messageBus, logger);
+        isWindows = systemGetPropertyNullSafe("os.name", logger).startsWith("Windows");
         this.eventMessageBus.addReceiver(m -> logger.debug("Received message: " + m));
+    }
+
+    private static String systemGetPropertyNullSafe(String property, EventLogger logger) {
+        String prop = System.getProperty(property);
+        if (prop == null) {
+            logger.warn("System property [" + property + "] is not set!");
+        }
+        return prop == null ? "" : prop;
     }
 
     @Override
