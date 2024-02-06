@@ -15,6 +15,7 @@
  */
 package io.perfana.events.commandrunner;
 
+import io.perfana.eventscheduler.api.CustomEvent;
 import io.perfana.eventscheduler.api.EventAdapter;
 import io.perfana.eventscheduler.api.EventLogger;
 import io.perfana.eventscheduler.api.config.TestContext;
@@ -33,12 +34,47 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static io.perfana.events.commandrunner.CommandRunnerEvent.AllowedCustomEvents.runcommand;
+import static io.perfana.events.commandrunner.CommandRunnerEvent.AllowedCustomEvents.stream;
 
 public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> {
 
     private Future<ProcessResult> future;
 
     private final boolean isWindows;
+
+    enum AllowedCustomEvents {
+        runcommand("run-command");
+
+        private final String eventName;
+
+        AllowedCustomEvents(String eventName) {
+            this.eventName = eventName;
+        }
+
+        public String getEventName() {
+            return eventName;
+        }
+
+        public static Stream<AllowedCustomEvents> stream() {
+            return Stream.of(values());
+        }
+
+        public boolean hasEventName(String name) {
+            return this.eventName.equals(name);
+        }
+    }
+
+    private final Set<String> allowedCustomEvents = setOf(stream()
+            .map(AllowedCustomEvents::getEventName)
+            .toArray(String[]::new));
+
+    @Override
+    public Collection<String> allowedCustomEvents() {
+        return allowedCustomEvents;
+    }
 
     public CommandRunnerEvent(CommandRunnerEventContext eventContext, TestContext testContext, EventMessageBus messageBus, EventLogger logger) {
         super(eventContext, testContext, messageBus, logger);
@@ -55,11 +91,36 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
     }
 
     @Override
+    public void customEvent(CustomEvent scheduleEvent) {
+        String eventName = scheduleEvent.getName();
+        try {
+            if (runcommand.hasEventName(eventName)) {
+                Map<String, String> parsedSettings = parseSettings(scheduleEvent.getSettings());
+
+                // if name is set, only run the command if the name matches
+                String name = parsedSettings.get("name");
+                if (name != null && !eventContext.getName().equals(name)) {
+                    logger.info("Ignoring event [" + eventName + "] for [" + name + "], this is [" + eventContext.getName() + "]");
+                    return;
+                }
+
+                String command = eventContext.getOnScheduledEvent();
+                command = parsedSettings.entrySet().stream()
+                        .reduce(command, (k, v) -> k.replaceAll("__" + v.getKey() + "__", v.getValue()), String::concat);
+
+                runCommand(command, "scheduledEvent");
+            } else {
+                logger.warn("ignoring unknown event [" + eventName + "]");
+            }
+        } catch (Exception e) {
+            logger.error("Failed to run custom event: " + eventName, e);
+        }
+    }
+
+    @Override
     public void beforeTest() {
 
         String pluginName = CommandRunnerEvent.class.getSimpleName() + "-" + eventContext.getName();
-
-        String newTestRunId = testContext.getTestRunId();
 
         // default sending of command is disabled: might contain secrets
         if (eventContext.isSendTestRunConfig()) {
@@ -69,8 +130,6 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
         }
 
         String command = eventContext.getOnBeforeTest();
-
-        command = command.replace("__testRunId__", newTestRunId);
 
         Future<ProcessResult> beforeTestCommandFuture = runCommand(command, "beforeTest");
 
@@ -177,6 +236,9 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
         }
         logger.info("About to run " + commandType + " [" + command + "]");
 
+        String newTestRunId = testContext.getTestRunId();
+        command = command.replace("__testRunId__", newTestRunId);
+
         List<String> commandList;
 
         if (isWindows) {
@@ -271,5 +333,14 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
             return 9999;
         }
         return processResult.getExitValue();
+    }
+
+    static Map<String, String> parseSettings(String eventSettings) {
+        if (eventSettings == null || eventSettings.trim().isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return Arrays.stream(eventSettings.split(";"))
+                .map(s -> s.split("="))
+                .collect(Collectors.toMap(k -> k[0], v -> v.length == 2 ? v[1] : ""));
     }
 }

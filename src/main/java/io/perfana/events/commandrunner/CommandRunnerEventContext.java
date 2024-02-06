@@ -28,15 +28,17 @@ public class CommandRunnerEventContext extends EventContext {
     private final String onKeepAlive;
     private final String onAbort;
     private final String onAfterTest;
+    private final String onScheduledEvent;
     private final boolean sendTestRunConfig;
 
-    protected CommandRunnerEventContext(EventContext context, String onBeforeTest, String onStartTest, String onKeepAlive, String onAbort, String onAfterTest, boolean sendTestRunConfig) {
+    protected CommandRunnerEventContext(EventContext context, String onBeforeTest, String onStartTest, String onKeepAlive, String onAbort, String onAfterTest, String onCustomEvent, boolean sendTestRunConfig) {
         super(context, CommandRunnerEventFactory.class.getName());
         this.onStartTest = onStartTest;
         this.onBeforeTest = onBeforeTest;
         this.onKeepAlive = onKeepAlive;
         this.onAbort = onAbort;
         this.onAfterTest = onAfterTest;
+        this.onScheduledEvent = onCustomEvent;
         this.sendTestRunConfig = sendTestRunConfig;
     }
 
@@ -60,6 +62,10 @@ public class CommandRunnerEventContext extends EventContext {
         return onBeforeTest;
     }
 
+    public String getOnScheduledEvent() {
+        return onScheduledEvent;
+    }
+
     public boolean isSendTestRunConfig() {
         return sendTestRunConfig;
     }
@@ -72,6 +78,7 @@ public class CommandRunnerEventContext extends EventContext {
                 ", onKeepAlive='" + onKeepAlive + '\'' +
                 ", onAbort='" + onAbort + '\'' +
                 ", onAfterTest='" + onAfterTest + '\'' +
+                ", onScheduledEvent='" + onScheduledEvent + '\'' +
                 ", sendTestRunConfig=" + sendTestRunConfig +
                 '}';
     }

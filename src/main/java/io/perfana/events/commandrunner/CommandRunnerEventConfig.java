@@ -22,19 +22,18 @@ import net.jcip.annotations.NotThreadSafe;
 public class CommandRunnerEventConfig extends EventConfig {
 
     private String onStartTest = "";
-
     private String onBeforeTest = "";
     private String onKeepAlive = "";
-
     private String onAbort = "";
-
     private String onAfterTest = "";
+
+    private String onScheduledEvent = "";
 
     private boolean sendTestRunConfig = false;
 
     @Override
     public CommandRunnerEventContext toContext() {
-        return new CommandRunnerEventContext(super.toContext(), onBeforeTest, onStartTest, onKeepAlive, onAbort, onAfterTest, sendTestRunConfig);
+        return new CommandRunnerEventContext(super.toContext(), onBeforeTest, onStartTest, onKeepAlive, onAbort, onAfterTest, onScheduledEvent, sendTestRunConfig);
     }
 
     public String getOnBeforeTest() {
@@ -85,6 +84,14 @@ public class CommandRunnerEventConfig extends EventConfig {
         this.onAfterTest = onAfterTest;
     }
 
+    public String getOnScheduledEvent() {
+        return onScheduledEvent;
+    }
+
+    public void setOnScheduledEvent(String onScheduledEvent) {
+        this.onScheduledEvent = onScheduledEvent;
+    }
+
     @Override
     public String toString() {
         return "CommandRunnerEventConfig{" +
@@ -93,6 +100,7 @@ public class CommandRunnerEventConfig extends EventConfig {
                 ", onKeepAlive='" + onKeepAlive + '\'' +
                 ", onAbort='" + onAbort + '\'' +
                 ", onAfterTest='" + onAfterTest + '\'' +
+                ", onCustomEvent='" + onScheduledEvent + '\'' +
                 ", sendTestRunConfig=" + sendTestRunConfig +
                 '}';
     }

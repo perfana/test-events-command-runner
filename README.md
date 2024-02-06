@@ -21,6 +21,12 @@ remote running load test process.
 Use `onAfterTest` for a command that is called on an `after-test` event. For instance, clean up
 artifacts from a another command.
 
+Use `onScheduledEvent` for a command that is called in an event scheduler script. 
+Use `runcommand` event. Use `name` to match one specific command runner event to trigger.
+Use key=value parameters with `;` separated key=value pairs. 
+In the command surround the keys underscores to be replaced, like `__key__`.
+Use `__testRunId__` to be replaced by the test run id from the current test context.
+
 Only when _all_ polling commands that are indicated as `continueOnKeepAliveParticipant` request a stop,
 the test-run is actually stopped.
 
@@ -62,6 +68,10 @@ commands end, e.g. by running `rm -v /tmp/test-run-*.busy`.
                     <buildResultsUrl>${CIBuildResultsUrl}</buildResultsUrl>
                     <rampupTimeInSeconds>${rampupTimeInSeconds}</rampupTimeInSeconds>
                     <constantLoadTimeInSeconds>${constantLoadTimeInSeconds}</constantLoadTimeInSeconds>
+                    <eventSchedulerScript>
+                        PT30S|run-command(scale to 3)|name=k8sCommand;app=myapp;namespace=mynamespace;replicas=3
+                        PT1M|run-command(scale to 1)|name=k8sCommand;app=myapp;namespace=mynamespace;replicas=1
+                    </eventSchedulerScript>
                     <annotations>${annotations}</annotations>
                     <tags>${tags}</tags>
                 </testConfig>
@@ -85,6 +95,10 @@ commands end, e.g. by running `rm -v /tmp/test-run-*.busy`.
                         <onAbort>rm /tmp/test-run-2.busy; \
                             echo abort K6 runner 2</onAbort>
                         <onAfterTest>rm /tmp/test-run-2.busy; echo end ${testRunId}</onAfterTest>
+                    </eventConfig>
+                    <eventConfig implementation="io.perfana.events.commandrunner.CommandRunnerEventConfig">
+                        <name>k8sCommand</name>
+                        <onScheduledEvent>kubectl -n __namespace__ scale --replicas=__replicas__ --timeout=1m deployment __app__</onScheduledEvent>
                     </eventConfig>
                 </eventConfigs>
             </eventSchedulerConfig>
