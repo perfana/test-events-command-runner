@@ -21,14 +21,27 @@ remote running load test process.
 Use `onAfterTest` for a command that is called on an `after-test` event. For instance, clean up
 artifacts from a another command.
 
+Only when _all_ polling commands that are indicated as `continueOnKeepAliveParticipant` request a stop,
+the test-run is actually stopped.
+
 Use `onScheduledEvent` for a command that is called in an event scheduler script. 
 Use `runcommand` event. Use `name` to match one specific command runner event to trigger.
 Use key=value parameters with `;` separated key=value pairs. 
 In the command surround the keys underscores to be replaced, like `__key__`.
 Use `__testRunId__` to be replaced by the test run id from the current test context.
 
-Only when _all_ polling commands that are indicated as `continueOnKeepAliveParticipant` request a stop,
-the test-run is actually stopped.
+Example of a line in a schedule script is: 
+
+    PT30S|run-command(scale to 3)|name=k8sCommand;app=myapp;namespace=mynamespace;replicas=3
+
+The `PT30S` is the when the event should happen after start of test, so 30 seconds after the start.
+The `run-command(scale to 3)` is the event identifier and a message to be included in the registered event
+so you can see what its purpose is. The `name` matches a name of a command runner plugin config. 
+If no specific name is given, all command runner configs that contain an `onScheduledEvent` will be triggered.
+The `app`, `namespace` and `replicas` are variables used in the command itself. Use underscores in the command
+so these are replaced before being run. Example:
+
+    <onScheduledEvent>kubectl -n __namespace__ scale --replicas=__replicas__ --timeout=1m deployment __app__</onScheduledEvent>
 
 Note: used executables in the commands should be available
 on the `PATH` of the process that runs this (e.g. the CI server).
