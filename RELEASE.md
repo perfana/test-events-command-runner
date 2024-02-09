@@ -1,5 +1,9 @@
 # Release notes Perfana Test Events Command Runner
 
+## 3.0.2 - February 2024
+
+* use `onScheduledEvent` to run a command on as scheduled event
+
 ## 3.0.1 - October 2023
 
 * use `__testRunId__` in commands to be replaced by test run id from the current text context
