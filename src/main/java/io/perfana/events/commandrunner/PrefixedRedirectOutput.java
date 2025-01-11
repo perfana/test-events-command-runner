@@ -20,7 +20,8 @@ import net.jcip.annotations.GuardedBy;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Output stream that inserts a prefix at each new line.
@@ -31,15 +32,20 @@ import java.nio.charset.StandardCharsets;
  */
 public class PrefixedRedirectOutput extends OutputStream {
 
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
+
     private static final int BUFFER_SIZE = 1024;
+
+    private final RedirectType redirectType;
 
     private final Object bufferLock = new Object();
     @GuardedBy("bufferLock")
     private final byte[] buffer = new byte[BUFFER_SIZE];
+
     @GuardedBy("bufferLock")
     private int pointer;
 
-    private final byte[] prefix;
+    private final String prefix;
 
     private final OutputStream wrappedOS;
 
@@ -50,20 +56,21 @@ public class PrefixedRedirectOutput extends OutputStream {
     private volatile boolean start = true;
     private volatile boolean thereIsMore = false;
 
-    public PrefixedRedirectOutput(String prefix, OutputStream wrappedOS) {
+    public PrefixedRedirectOutput(String prefix, OutputStream wrappedOS, RedirectType redirectType) {
         super();
-        this.prefix = prefix.getBytes(StandardCharsets.UTF_8);
+        this.prefix = prefix;
         this.wrappedOS = wrappedOS;
+        this.redirectType = redirectType;
     }
 
     @Override
     public void write(int b) throws IOException {
         if (start) {
             start = false;
-            wrappedOS.write(prefix);
+            wrappedOS.write(createPrefix());
         }
         if (thereIsMore) {
-            wrappedOS.write(prefix);
+            wrappedOS.write(createPrefix());
             thereIsMore = false;
         }
 
@@ -80,17 +87,26 @@ public class PrefixedRedirectOutput extends OutputStream {
         }
     }
 
+    private byte[] createPrefix() {
+        String fullPrefix = formatTime() + " " + redirectType + " " + prefix;
+        return fullPrefix.getBytes(StandardCharsets.UTF_8);
+    }
+
+    private String formatTime() {
+        return TIME_FORMATTER.format(LocalTime.now());
+    }
+
     private void flushBuffer() throws IOException {
         // This might be a nasty thing to do: high-jack
         // the lock of a foreign object!
         // Can cause deadlocks?
         // Trying to reduce change of output interleaving...
-        //synchronized (wrappedOS) {
+        synchronized (wrappedOS) {
             synchronized (bufferLock) {
                 wrappedOS.write(buffer, 0, pointer);
                 pointer = 0;
             }
-        //}
+        }
     }
 
     @Override
@@ -102,9 +118,14 @@ public class PrefixedRedirectOutput extends OutputStream {
     @Override
     public void close() throws IOException {
         flushBuffer();
-        write(prefix);
+        write(createPrefix());
         write(" END!".getBytes(StandardCharsets.UTF_8));
         write(newLine.getBytes(StandardCharsets.UTF_8));
         wrappedOS.close();
+    }
+
+    public enum RedirectType {
+        STDOUT,
+        STDERR
     }
 }

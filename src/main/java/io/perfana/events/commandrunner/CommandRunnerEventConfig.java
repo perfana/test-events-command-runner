@@ -23,6 +23,7 @@ public class CommandRunnerEventConfig extends EventConfig {
 
     private String onStartTest = "";
     private String onBeforeTest = "";
+    private String onBeforeTestNoWait = "";
     private String onKeepAlive = "";
     private String onAbort = "";
     private String onAfterTest = "";
@@ -33,7 +34,7 @@ public class CommandRunnerEventConfig extends EventConfig {
 
     @Override
     public CommandRunnerEventContext toContext() {
-        return new CommandRunnerEventContext(super.toContext(), onBeforeTest, onStartTest, onKeepAlive, onAbort, onAfterTest, onScheduledEvent, sendTestRunConfig);
+        return new CommandRunnerEventContext(super.toContext(), onBeforeTest, onBeforeTestNoWait, onStartTest, onKeepAlive, onAbort, onAfterTest, onScheduledEvent, sendTestRunConfig);
     }
 
     public String getOnBeforeTest() {
@@ -42,6 +43,10 @@ public class CommandRunnerEventConfig extends EventConfig {
 
     public void setOnBeforeTest(String onBeforeTest) {
         this.onBeforeTest = onBeforeTest;
+    }
+
+    public void setOnBeforeTestNoWait(String onBeforeTestNoWait) {
+        this.onBeforeTestNoWait = onBeforeTestNoWait;
     }
 
     public void setOnStartTest(String onStartTest) {
@@ -97,6 +102,7 @@ public class CommandRunnerEventConfig extends EventConfig {
         return "CommandRunnerEventConfig{" +
                 "onStartTest='" + onStartTest + '\'' +
                 ", onBeforeTest='" + onBeforeTest + '\'' +
+                ", onBeforeTestNoWait='" + onBeforeTestNoWait + '\'' +
                 ", onKeepAlive='" + onKeepAlive + '\'' +
                 ", onAbort='" + onAbort + '\'' +
                 ", onAfterTest='" + onAfterTest + '\'' +

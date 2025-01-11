@@ -29,19 +29,18 @@ import org.zeroturnaround.exec.ProcessResult;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.perfana.events.commandrunner.CommandRunnerEvent.AllowedCustomEvents.runcommand;
 import static io.perfana.events.commandrunner.CommandRunnerEvent.AllowedCustomEvents.stream;
+import static io.perfana.events.commandrunner.PrefixedRedirectOutput.RedirectType.STDERR;
+import static io.perfana.events.commandrunner.PrefixedRedirectOutput.RedirectType.STDOUT;
 
 public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> {
 
-    private Future<ProcessResult> future;
+    private Map<String, Future<ProcessResult>> futures = new ConcurrentHashMap<>();
 
     private final boolean isWindows;
 
@@ -129,29 +128,65 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
             this.eventMessageBus.send(message);
         }
 
+        runBeforeTestNoWait(pluginName);
+        runBeforeTest(pluginName);
+
+    }
+
+    private void runBeforeTest(String pluginName) {
         String command = eventContext.getOnBeforeTest();
 
-        Future<ProcessResult> beforeTestCommandFuture = runCommand(command, "beforeTest");
-
-        if (beforeTestCommandFuture == null) {
-            logger.debug("No result available for beforeTest command");
+        if (command.isEmpty()) {
+            logger.debug("No command to run for beforeTest");
         }
         else {
-            waitForCommandToFinishOrTimeout(beforeTestCommandFuture);
+            Future<ProcessResult> beforeTestCommandFuture = runCommand(command, "beforeTest");
+
+            if (beforeTestCommandFuture == null) {
+                logger.debug("No result available for beforeTest command");
+            } else {
+                waitForCommandToFinishOrTimeout(beforeTestCommandFuture);
+            }
         }
 
         if (eventContext.isReadyForStartParticipant()) {
             this.eventMessageBus.send(EventMessage.builder().pluginName(pluginName).message("Go!").build());
         }
+    }
 
+    private void runBeforeTestNoWait(String pluginName) {
+        String command = eventContext.getOnBeforeTestNoWait();
+
+        if (command.isEmpty()) {
+            logger.debug("No command to run for beforeTest");
+            return;
+        }
+
+        Future<ProcessResult> future = runCommand(command, "beforeTest");
+        if (future != null) {
+            futures.put("beforeTestNoWait", future);
+        } else {
+            logger.debug("No result available for beforeTest command");
+        }
+
+        if (future == null) {
+            logger.debug("No result available for beforeTest command");
+        }
     }
 
     private void waitForCommandToFinishOrTimeout(Future<ProcessResult> command) {
+        if (command == null) {
+            logger.warn("No command to wait for");
+            return;
+        }
+
         try {
             ProcessResult processResult = command.get(120, TimeUnit.SECONDS);
-
             if (processResult.getExitValue() != 0) {
                 logger.warn("Command did not end successfully. Exit code: " + processResult.getExitValue());
+            }
+            else {
+                logger.info("Command ended. Is done: " + command.isDone());
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -167,11 +202,16 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
     @Override
     public void startTest() {
         String command = eventContext.getOnStartTest();
-        future = runCommand(command, "startTest");
+        Future<ProcessResult> future = runCommand(command, "startTest");
+        if (future != null) {
+            futures.put("startTest", future);
+        }
     }
 
     @Override
     public void keepAlive() {
+
+        Future<ProcessResult> future = futures.get("startTest");
 
         if (isContinueOnKeepAliveParticipant() && future != null && future.isDone()) {
             int exitCode = getExitCode(future);
@@ -226,7 +266,14 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
     @Override
     public void afterTest() {
         cancelCommand();
-        runCommand(eventContext.getOnAfterTest(), "afterTest");
+
+        String onAfterTestCommand = eventContext.getOnAfterTest();
+        if (onAfterTestCommand.isEmpty()) {
+            logger.debug("No command to run for afterTest");
+            return;
+        }
+        Future<ProcessResult> future = runCommand(onAfterTestCommand, "afterTest");
+        waitForCommandToFinishOrTimeout(future);
     }
 
     private Future<ProcessResult> runCommand(String command, String commandType) {
@@ -254,8 +301,8 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
         try {
             myProcessResult = new ProcessExecutor()
                 .command(commandList)
-                .redirectOutput(new PrefixedRedirectOutput(eventContext.getName() + ": ", System.out))
-                .redirectError(new PrefixedRedirectOutput(eventContext.getName() + ": ", System.err))
+                .redirectOutput(new PrefixedRedirectOutput(eventContext.getName() + ": ", System.out, STDOUT))
+                .redirectError(new PrefixedRedirectOutput(eventContext.getName() + ": ", System.err, STDERR))
                 .start().getFuture();
         } catch (IOException e) {
             throw new EventSchedulerRuntimeException("Failed to run command: " + command, e);
@@ -303,11 +350,22 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
 
     private void abortCommand() {
         String abortCommand = eventContext.getOnAbort();
-        runCommand(abortCommand, "abortCommand");
+        if (abortCommand.isEmpty()) {
+            logger.debug("No command to run for abortCommand");
+            return;
+        }
+        Future<ProcessResult> future = runCommand(abortCommand, "abortCommand");
+        waitForCommandToFinishOrTimeout(future);
     }
 
     private void cancelCommand() {
         String command = eventContext.getOnStartTest();
+        for (String key : futures.keySet()) {
+            cancelCommand(command, futures.get(key));
+        }
+    }
+
+    private void cancelCommand(String command, Future<ProcessResult> future) {
         if (future != null) {
             logger.debug("There is a future for [ " + command + "]");
             if (!future.isDone()) {

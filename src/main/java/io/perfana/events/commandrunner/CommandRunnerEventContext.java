@@ -25,16 +25,18 @@ public class CommandRunnerEventContext extends EventContext {
 
     private final String onStartTest;
     private final String onBeforeTest;
+    private final String onBeforeTestNoWait;
     private final String onKeepAlive;
     private final String onAbort;
     private final String onAfterTest;
     private final String onScheduledEvent;
     private final boolean sendTestRunConfig;
 
-    protected CommandRunnerEventContext(EventContext context, String onBeforeTest, String onStartTest, String onKeepAlive, String onAbort, String onAfterTest, String onCustomEvent, boolean sendTestRunConfig) {
+    protected CommandRunnerEventContext(EventContext context, String onBeforeTest, String onBeforeTestNoWait, String onStartTest, String onKeepAlive, String onAbort, String onAfterTest, String onCustomEvent, boolean sendTestRunConfig) {
         super(context, CommandRunnerEventFactory.class.getName());
         this.onStartTest = onStartTest;
         this.onBeforeTest = onBeforeTest;
+        this.onBeforeTestNoWait = onBeforeTestNoWait;
         this.onKeepAlive = onKeepAlive;
         this.onAbort = onAbort;
         this.onAfterTest = onAfterTest;
@@ -62,6 +64,10 @@ public class CommandRunnerEventContext extends EventContext {
         return onBeforeTest;
     }
 
+    public String getOnBeforeTestNoWait() {
+        return onBeforeTestNoWait;
+    }
+
     public String getOnScheduledEvent() {
         return onScheduledEvent;
     }
@@ -75,6 +81,7 @@ public class CommandRunnerEventContext extends EventContext {
         return "CommandRunnerEventContext{" +
                 "onStartTest='" + onStartTest + '\'' +
                 ", onBeforeTest='" + onBeforeTest + '\'' +
+                ", onBeforeTestNoWait='" + onBeforeTestNoWait + '\'' +
                 ", onKeepAlive='" + onKeepAlive + '\'' +
                 ", onAbort='" + onAbort + '\'' +
                 ", onAfterTest='" + onAfterTest + '\'' +
@@ -89,11 +96,11 @@ public class CommandRunnerEventContext extends EventContext {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         CommandRunnerEventContext that = (CommandRunnerEventContext) o;
-        return sendTestRunConfig == that.sendTestRunConfig && Objects.equals(onStartTest, that.onStartTest) && Objects.equals(onBeforeTest, that.onBeforeTest) && Objects.equals(onKeepAlive, that.onKeepAlive) && Objects.equals(onAbort, that.onAbort) && Objects.equals(onAfterTest, that.onAfterTest);
+        return sendTestRunConfig == that.sendTestRunConfig && Objects.equals(onStartTest, that.onStartTest) && Objects.equals(onBeforeTest, that.onBeforeTest) && Objects.equals(onBeforeTestNoWait, that.onBeforeTestNoWait) && Objects.equals(onKeepAlive, that.onKeepAlive) && Objects.equals(onAbort, that.onAbort) && Objects.equals(onAfterTest, that.onAfterTest);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), onStartTest, onBeforeTest, onKeepAlive, onAbort, onAfterTest, sendTestRunConfig);
+        return Objects.hash(super.hashCode(), onStartTest, onBeforeTest, onBeforeTestNoWait, onKeepAlive, onAbort, onAfterTest, sendTestRunConfig);
     }
 }

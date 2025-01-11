@@ -6,6 +6,10 @@ Use `onBeforeTest` for a command that is called on the `before-test` event. For 
 test database. If the command is a `readyForStartParticipant`, the start test will be delayed until this
 command is finished.
 
+Use `onBeforeTestNoWait` for a command that is called on the `before-test` event but does *not* wait
+for the command to finish. This is useful for initializing processes or tasks that can run in parallel with
+the test setup and do not require a blocking operation.
+
 Use the `onStartTest` for the command to run during the test run (e.g. the actual load test).
 When the command ends and `continueOnKeepAliveParticipant` is true, a stop test request is sent.
 If the command runs for a long time (e.g. a non-self ending load test), it is cancelled at the end of the
@@ -34,7 +38,7 @@ Example of a line in a schedule script is:
 
     PT30S|run-command(scale to 3)|name=k8sCommand;app=myapp;namespace=mynamespace;replicas=3
 
-The `PT30S` is the when the event should happen after start of test, so 30 seconds after the start.
+The `PT30S` is when the event should happen after start of test, so 30 seconds after the start.
 The `run-command(scale to 3)` is the event identifier and a message to be included in the registered event
 so you can see what its purpose is. The `name` matches a name of a command runner plugin config. 
 If no specific name is given, all command runner configs that contain an `onScheduledEvent` will be triggered.
