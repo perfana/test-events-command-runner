@@ -36,7 +36,7 @@
             <plugin>
                 <groupId>io.perfana</groupId>
                 <artifactId>event-scheduler-maven-plugin</artifactId>
-                <version>3.0.5</version>
+                <version>3.0.6</version>
                 <configuration>
                     <eventSchedulerConfig>
                         <debugEnabled>true</debugEnabled>
