@@ -25,7 +25,7 @@ remote running load test process.
 Use `onAfterTest` for a command that is called on an `after-test` event. For instance, clean up
 artifacts from a another command.
 
-Only when _all_ polling commands that are indicated as `continueOnKeepAliveParticipant` request a stop,
+Only when _all_ keep-alive commands that are indicated as `continueOnKeepAliveParticipant` request a stop,
 the test-run is actually stopped.
 
 Use `onScheduledEvent` for a command that is called in an event scheduler script. 

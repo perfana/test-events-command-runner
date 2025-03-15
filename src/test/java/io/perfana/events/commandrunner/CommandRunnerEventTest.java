@@ -36,7 +36,7 @@ class CommandRunnerEventTest {
         eventConfig.setSendTestRunConfig(true);
         eventConfig.setOnBeforeTest("echo hello there");
         eventConfig.setOnStartTest("echo something >&2; for (( ; ; )) do echo __testRunId__ $(date); sleep 0.01; done");
-        eventConfig.setOnKeepAlive("sh -c \"echo this is a polling command simulation; exit 0\"");
+        eventConfig.setOnKeepAlive("sh -c \"echo this is a keep-alive command simulation; exit 0\"");
         eventConfig.setOnAbort("echo this is an echo abort command");
 
         EventMessageBus messageBus = new EventMessageBusSimple();

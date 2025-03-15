@@ -220,9 +220,9 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
             throw new StopTestRunException(message);
         }
 
-        String pollingCommand = eventContext.getOnKeepAlive();
+        String keepAliveCommand = eventContext.getOnKeepAlive();
 
-        Future<ProcessResult> processResultFuture = runCommand(pollingCommand, "keepAlive");
+        Future<ProcessResult> processResultFuture = runCommand(keepAliveCommand, "keepAlive");
 
         if (processResultFuture == null) {
             return;
@@ -232,28 +232,31 @@ public class CommandRunnerEvent extends EventAdapter<CommandRunnerEventContext> 
         try {
             processResult = processResultFuture.get(30, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-            logger.warn("Polling command got interrupted! " + e.getMessage());
+            logger.warn("Keep-alive command got interrupted! " + e.getMessage());
             Thread.currentThread().interrupt();
             return;
         } catch (ExecutionException e) {
-            logger.warn("Polling command cannot be executed! " + e.getMessage());
+            logger.warn("Keep-alive command cannot be executed! " + e.getMessage());
             return;
         } catch (TimeoutException e) {
-            logger.warn("Polling command got timeout! " + e.getMessage());
+            logger.warn("Keep-alive command got timeout! " + e.getMessage());
             return;
         }
 
         int exitValue = processResult.getExitValue();
         if (exitValue != 0) {
-            String message = "Received failed (non-zero) exit value for polling command (" + exitValue + ")." +
-                    " Request to stop test run.";
-            logger.info(message);
+            String stopMessage = isContinueOnKeepAliveParticipant()
+                    ? "Is continueOnKeepAliveParticipant: will request a stop test run."
+                    : "Is no continueOnKeepAliveParticipant: will not request a stop test run.";
+            String message = "Received failed (non-zero) exit value for keep-alive command (exit: " + exitValue + "). ";
+            logger.info(message + stopMessage);
             if (isContinueOnKeepAliveParticipant()) {
+                logger.info("This is a continueOnKeepAlive participant, will request to stop test run.");
                 throw new StopTestRunException(message);
             }
         }
         else {
-            logger.info("Received success (zero) exit value for polling command, keep on running!");
+            logger.info("Received success (zero) exit value for keep-alive command, keep on running!");
         }
     }
 
